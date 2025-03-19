@@ -1,0 +1,10 @@
+{
+    "2d950bfd-0474-11f0-ac5b-6018951e3e60": {
+        "person_token": "2d950bfd-0474-11f0-ac5b-6018951e3e60",
+        "permission": "admin"
+    },
+    "5a424299-0474-11f0-832e-6018951e3e60": {
+        "person_token": "5a424299-0474-11f0-832e-6018951e3e60",
+        "permission": "member"
+    }
+}
