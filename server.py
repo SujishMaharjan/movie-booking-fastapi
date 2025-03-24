@@ -60,9 +60,28 @@ class ReserveModel(BaseModel):
 
 app = FastAPI()
 
-
 @app.post('/users/')
 def create_users(users: Users):
+    """
+    Creates a new user account.
+
+    - **users (Users)**: A Pydantic model containing user details, including username, password, and permission level.
+    - **Database Initialization**: Ensures the database is set up before storing user data.
+    - **User ID Generation**: Assigns a unique ID to the new user.
+    - **Password Hashing**: Encrypts the password for security.
+    - **User Verification**: Checks if the username is already in use.
+    - **Role Assignment**: Creates an Admin or Member user based on the provided permission.
+    - **Token Generation**: Adds the user and their role to the database.
+    
+    **Responses:**
+    - ✅ **201 Created**: Returns a success message and user details if the account is created.
+    - ❌ **400 Bad Request**: Returns an error message if the username is already taken.
+
+    **Returns:**
+    - A dictionary containing the username, permission, and a success message.
+    - If the username already exists, returns an error message.
+
+    """
     Database.create_database(DATABASE)
     u = users.model_dump()
     u["user_id"] = str(uuid.uuid1())
