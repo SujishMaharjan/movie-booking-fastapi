@@ -16,5 +16,14 @@
         "total_seats": 200,
         "booked_seats": 0,
         "available_seats": 200
+    },
+    "Movie3": {
+        "movie_id": "b15b0ad3-4890-45f2-9b1e-ec961c5f65c1",
+        "movie_name": "Movie3",
+        "movie_description": "Sci-fi action robots",
+        "movie_status": "Available",
+        "total_seats": 200,
+        "booked_seats": 0,
+        "available_seats": 200
     }
 }

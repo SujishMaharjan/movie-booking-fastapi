@@ -16,5 +16,23 @@
         "username": "member",
         "password": "b'$2b$12$GonCyUW0Zsw0zPNDfe9yfOTyIPYz69PJyQVHD93Kd.0H/wnIjodgi'",
         "permission": "member"
+    },
+    "admin123": {
+        "user_id": "5227f2e8-0892-11f0-8c5d-6018951e3e60",
+        "name": "admin1",
+        "date_of_birth": "2000-01-01",
+        "email": "admin1@gmail.com",
+        "username": "admin123",
+        "password": "b'$2b$12$u0zDQd8O.Q3y/EXrfx4V7O.If3j4h.ElWU6ikHkA4dvN41eoHN6Uu'",
+        "permission": "admin"
+    },
+    "member123": {
+        "user_id": "6673711f-0892-11f0-aeee-6018951e3e60",
+        "name": "member1",
+        "date_of_birth": "2000-01-01",
+        "email": "member1@gmail.com",
+        "username": "member123",
+        "password": "b'$2b$12$5HxXzQ1ZqyVLcxvegRmQDul4s6sVV6CFxDQevIBDbW5.UI/58yA4W'",
+        "permission": "admin"
     }
 }
