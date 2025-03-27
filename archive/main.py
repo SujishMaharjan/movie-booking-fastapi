@@ -1,11 +1,11 @@
 import json,os
 from database import Database
-from contextmanager import ContextManager
-from person import *
-from movie import Movie
+from archive.contextmanager import ContextManager
+from archive.person import *
+from archive.movie import Movie
 import uuid
 from functions import *
-from reserve import Reservation
+from archive.reserve import Reservation
 
 
 DATABASE = {

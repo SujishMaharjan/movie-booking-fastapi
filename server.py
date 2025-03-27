@@ -1,119 +1,122 @@
-import os,json,bcrypt
-from person import *
-from reserve import Reservation
-from movie import Movie
+import jwt
+from archive.person import *
+from archive.reserve import Reservation
+from archive.movie import Movie
 from database import Database
-from contextmanager import ContextManager
-from fastapi import FastAPI,HTTPException, status, Depends, Request
-from fastapi.responses import RedirectResponse
+from archive.contextmanager import ContextManager
+from fastapi import FastAPI,HTTPException, status, Depends, Request,Form
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, SecretStr
-from enum import StrEnum
-from typing import Optional,Annotated
-from datetime import date, datetime
-
-
-DATABASE = {
-    "DB_FOLDER" : "Database",
-    "DB_FILES" : {
-        "db_users": "user.json",
-        "db_movies":"movie.json",
-        "db_reserves":"reserve.json",
-        "db_relations":"relation.json"
-    }
-}
+from typing import Optional,Annotated,List
+from datetime import date, datetime,timedelta,timezone
+from database import engine, SessionLocal, get_db
+from jwt.exceptions import InvalidTokenError
+from sqlalchemy.orm import Session
+from handlers import user_handler,movie_handlers
+from schemas import *
+import models
+from models import Users
 
 
 
-class MemberType(StrEnum):
-    admin = "admin"
-    member = "member"
+SECRET_KEY = "00bdd306967a61fdb05237b3adf7e7061de1f80cecddad868435c17123b4b463"
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-class AvailableType(StrEnum):
-    available = "Available"
-    unavailable = "Unavailable"
-    fully_reserved = "Fully Reserved"
-
-
-
-class Users(BaseModel):
-    name: str
-    date_of_birth : str
-    email : str
-    username : str
-    password : str
-    permission : MemberType
-    user_id : Optional[str] = None
-
-class MovieModel(BaseModel):
-    movie_name: str
-    movie_status : AvailableType
-    movie_description : str
-    movie_id : Optional[str] = None
-
-class ReserveModel(BaseModel):
-    username: str
-    movie_name: str
-    no_of_seats: int
-    reserve_id: Optional[str] = None
+db_dependency = Annotated[Session, Depends(get_db)]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login',scheme_name="JWT")
 
 
 app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
 
 @app.post('/users/')
-def create_users(users: Users):
-    """
-    Creates a new user account.
-
-    - **users (Users)**: A Pydantic model containing user details, including username, password, and permission level.
-    - **Database Initialization**: Ensures the database is set up before storing user data.
-    - **User ID Generation**: Assigns a unique ID to the new user.
-    - **Password Hashing**: Encrypts the password for security.
-    - **User Verification**: Checks if the username is already in use.
-    - **Role Assignment**: Creates an Admin or Member user based on the provided permission.
-    - **Token Generation**: Adds the user and their role to the database.
+async def create_users(user: UsersBase, db:db_dependency):
+    # breakpoint()
+    if user_handler.check_user_exist(db,user.username):
+        return JSONResponse(status_code=409, content={'detail':'Username already exist'})
+    if user_handler.add_user(db,user):
+        return UserResponse(**user.model_dump())
     
-    **Responses:**
-    - ✅ **201 Created**: Returns a success message and user details if the account is created.
-    - ❌ **400 Bad Request**: Returns an error message if the username is already taken.
-
-    **Returns:**
-    - A dictionary containing the username, permission, and a success message.
-    - If the username already exists, returns an error message.
-
-    """
-    Database.create_database(DATABASE)
-    u = users.model_dump()
-    u["user_id"] = str(uuid.uuid1())
-    u['password'] = str(Functions.create_hash_value(u['password']))
-
-    user_data_json = Database.read_json(DATABASE,"db_users")
-
-    if u["username"] not in user_data_json:
-        p = Admin(**u) if u["permission"] == "admin" else Member(**u) 
-        token = p.add_person(DATABASE,"db_users")
-        p.add_relation(DATABASE,"db_relations",token,p.permission)
-        response = {key : value for key, value in u.items() if key  in ["username","permission"]}
-        response['message'] ="User added successfully"
-        return response
-    else:
-        return {"error":"Please try another username"}
     
 
 @app.post('/login/') 
-def login_user(form_data: OAuth2PasswordRequestForm = Depends()):
+def login_user( db:db_dependency,form_data: OAuth2PasswordRequestForm=Depends()):
+    user = user_handler.authenticate_user(db,form_data.username,form_data.password)
+    if not user:
+        return JSONResponse(status_code=401,content={'detail':'Incorrect username or password'})
+    access_token = user_handler.create_access_token(
+        data={'sub':user.username},
+        ALGORITHM=ALGORITHM,
+        SECRET_KEY=SECRET_KEY,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return Token(access_token=access_token,token_type='bearer')
+    
 
-    token= Functions.login(DATABASE,"db_users",form_data.username,form_data.password)
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Incorrect username or password",
-                            headers={"WWW-Authenticate":"Bearer"})
-    else:
-         return {"token":token}
-
+def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
+    credentials_exception = JSONResponse(
+        status_code=401,
+        content={
+            "detail":"Could not validate credentials"
+        }
+    )
+    # breakpoint()
+    try:
+        payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
+        username :str = payload.get('sub')
+        # breakpoint()
+        if username is None:
+            return JSONResponse(status_code=404,content={'detail':"username not found"})
+        token_data = TokenData(username=username)
+        # return token_data.username
+    except InvalidTokenError:
+        return JSONResponse(content={'detail':"Invalid Token"})
+    user = user_handler.get_user(db,token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
 
 @app.post('/movies/')
-def add_movies(movie :MovieModel, request:Request):
+async def add_movies(db:db_dependency,movie :MovieBase, current_user:Annotated[Users, Depends(get_current_user)]):
+    # breakpoint()
+
+    if not user_handler.check_user_member_type(current_user,"admin"):
+        return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
+    if movie_handlers.check_movie_exist(db,movie.movie_name):
+        return JSONResponse(status_code=409, content={'detail':'Movie already exist'})
+    if movie_handlers.add_movie(db,movie):
+        return MovieResponse(**movie.model_dump())
+    
+
+    
+    
+
+    # auth_header = request.headers.get("Authorization")
+    # if not auth_header or not auth_header.startswith("Bearer"):
+    #     print("No token recieved")
+    #     raise JSONResponse(status_code=401, content={"detail":"Unauthorized: No token received!"})
+    
+    # token = auth_header.split(" ")[1]
+
+
+    # movie_names = [movie.movie_name for movie in db.query(models.Movies).all()]
+    # m = movie.model_dump()
+   
+    # db_movie = models.Movies(**m)
+    # if db_movie.movie_name in movie_names:
+    #     # return {'error':"username already exist"}
+    #     return JSONResponse(status_code=409,content={'detail':'Movie already exist'})
+    # if token not in tokens["admin"]:
+    #     return JSONResponse(status_code=409,content={'detail':'Invalid Token'})
+
+    # db.add(db_movie)
+    # db.commit()
+    # db.refresh(db_movie)
+    
+    # return UserResponse(**m)
+
+    
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer"):
         print("No token recieved")
@@ -157,7 +160,7 @@ def show_available_movies():
 
 
 @app.post('/reserve/')
-def reserve_movies(reserve:ReserveModel,request:Request):
+def reserve_movies(reserve:ReserveBase,request:Request):
     #get token from headers
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer"):
@@ -247,7 +250,7 @@ def show_reserve_by_user_name(username:str,request:Request):
     
 
 @app.put('/reserve/')
-def unreserve_movies(reserve:ReserveModel,request:Request):
+def unreserve_movies(reserve:ReserveBase,request:Request):
     #get token from headers
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer"):
