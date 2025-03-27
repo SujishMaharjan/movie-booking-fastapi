@@ -1,15 +1,9 @@
 import json,os,bcrypt
 from database import *
-from main import DATABASE
+from archive.main import DATABASE
 import models
 from fastapi.responses import RedirectResponse, JSONResponse
 import uuid
-
-
-tokens={
-    "admin":[],
-    "member":[]
-}
 
 
 

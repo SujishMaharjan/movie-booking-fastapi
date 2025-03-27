@@ -1,145 +1,120 @@
-import os,json,bcrypt
-from person import *
-from reserve import Reservation
-from movie import Movie
+import jwt
+from archive.person import *
+from archive.reserve import Reservation
+from archive.movie import Movie
 from database import Database
-from contextmanager import ContextManager
-from fastapi import FastAPI,HTTPException, status, Depends, Request
-from fastapi.responses import RedirectResponse, JSONResponse
+from archive.contextmanager import ContextManager
+from fastapi import FastAPI,HTTPException, status, Depends, Request,Form
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, SecretStr
-from enum import StrEnum
 from typing import Optional,Annotated,List
-from datetime import date, datetime
-from database import engine, SessionLocal
+from datetime import date, datetime,timedelta,timezone
+from database import engine, SessionLocal, get_db
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
+from handlers import user_handler,movie_handlers
+from schemas import *
 import models
-import uuid
+from models import Users
 
 
 
-DATABASE = {
-    "DB_FOLDER" : "Database",
-    "DB_FILES" : {
-        "db_users": "user.json",
-        "db_movies":"movie.json",
-        "db_reserves":"reserve.json",
-        "db_relations":"relation.json"
-    }
-}
-
-
-
-
-
-class MemberType(StrEnum):
-    admin = "admin"
-    member = "member"
-
-class AvailableType(StrEnum):
-    available = "Available"
-    unavailable = "Unavailable"
-    fully_reserved = "Fully Reserved"
-
-
-
-class UsersBase(BaseModel):
-    name: str
-    date_of_birth : str
-    email : str
-    username : str
-    password : str
-    permission : MemberType
-    user_id : Optional[str] = None
-
-class UserResponse(BaseModel):
-    name : str
-    username: str
-    permission: MemberType
-    # message: str
-
-class MovieBase(BaseModel):
-    movie_name: str
-    movie_status : AvailableType
-    movie_description : str
-    movie_id : Optional[str] = None
-
-class ReserveBase(BaseModel):
-    username: str
-    movie_name: str
-    no_of_seats: int
-    reserve_id: Optional[str] = None
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+SECRET_KEY = "00bdd306967a61fdb05237b3adf7e7061de1f80cecddad868435c17123b4b463"
+ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 db_dependency = Annotated[Session, Depends(get_db)]
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login',scheme_name="JWT")
 
 
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
 @app.post('/users/')
-async def create_users(users: UsersBase, db:db_dependency):
-   
-    # Database.create_database(DATABASE)
-    usernames = [user.username for user in db.query(models.Users).all()]
-    u = users.model_dump()
-    u['password'] = str(Functions.create_hash_value(u['password']))
-    db_user = models.Users(**u)
-    if db_user.username in usernames:
-        # return {'error':"username already exist"}
-        return JSONResponse(status_code=409,content={'detail':'Username already exist'})
+async def create_users(user: UsersBase, db:db_dependency):
     # breakpoint()
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    if user_handler.check_user_exist(db,user.username):
+        return JSONResponse(status_code=409, content={'detail':'Username already exist'})
+    if user_handler.add_user(db,user):
+        return UserResponse(**user.model_dump())
     
-    return UserResponse(**u)
-
     
 
 @app.post('/login/') 
 def login_user( db:db_dependency,form_data: OAuth2PasswordRequestForm=Depends()):
+    user = user_handler.authenticate_user(db,form_data.username,form_data.password)
+    if not user:
+        return JSONResponse(status_code=401,content={'detail':'Incorrect username or password'})
+    access_token = user_handler.create_access_token(
+        data={'sub':user.username},
+        ALGORITHM=ALGORITHM,
+        SECRET_KEY=SECRET_KEY,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return Token(access_token=access_token,token_type='bearer')
     
-    token= Functions.login(db,form_data.username,form_data.password)
-    if not token:
-        return JSONResponse(status_code=404,content={"detail":"Incorrect Username or Password"})
-    else:
-         return token
 
+def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
+    credentials_exception = JSONResponse(
+        status_code=401,
+        content={
+            "detail":"Could not validate credentials"
+        }
+    )
+    # breakpoint()
+    try:
+        payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
+        username :str = payload.get('sub')
+        # breakpoint()
+        if username is None:
+            return JSONResponse(status_code=404,content={'detail':"username not found"})
+        token_data = TokenData(username=username)
+        # return token_data.username
+    except InvalidTokenError:
+        return JSONResponse(content={'detail':"Invalid Token"})
+    user = user_handler.get_user(db,token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user
 
 @app.post('/movies/')
-def add_movies(movie :MovieBase, request:Request,db:db_dependency):
+async def add_movies(db:db_dependency,movie :MovieBase, current_user:Annotated[Users, Depends(get_current_user)]):
+    # breakpoint()
 
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer"):
-        print("No token recieved")
-        raise JSONResponse(status_code=401, content={"detail":"Unauthorized: No token received!"})
+    if not user_handler.check_user_member_type(current_user,"admin"):
+        return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
+    if movie_handlers.check_movie_exist(db,movie.movie_name):
+        return JSONResponse(status_code=409, content={'detail':'Movie already exist'})
+    if movie_handlers.add_movie(db,movie):
+        return MovieResponse(**movie.model_dump())
     
-    token = auth_header.split(" ")[1]
+
+    
+    
+
+    # auth_header = request.headers.get("Authorization")
+    # if not auth_header or not auth_header.startswith("Bearer"):
+    #     print("No token recieved")
+    #     raise JSONResponse(status_code=401, content={"detail":"Unauthorized: No token received!"})
+    
+    # token = auth_header.split(" ")[1]
 
 
-    movie_names = [movie.movie_name for movie in db.query(models.Movies).all()]
-    m = movie.model_dump()
+    # movie_names = [movie.movie_name for movie in db.query(models.Movies).all()]
+    # m = movie.model_dump()
    
-    db_movie = models.Movies(**m)
-    if db_movie.movie_name in movie_names:
-        # return {'error':"username already exist"}
-        return JSONResponse(status_code=409,content={'detail':'Movie already exist'})
-    if token not in tokens["admin"]:
-        return JSONResponse(status_code=409,content={'detail':'Invalid Token'})
+    # db_movie = models.Movies(**m)
+    # if db_movie.movie_name in movie_names:
+    #     # return {'error':"username already exist"}
+    #     return JSONResponse(status_code=409,content={'detail':'Movie already exist'})
+    # if token not in tokens["admin"]:
+    #     return JSONResponse(status_code=409,content={'detail':'Invalid Token'})
 
-    db.add(db_movie)
-    db.commit()
-    db.refresh(db_movie)
+    # db.add(db_movie)
+    # db.commit()
+    # db.refresh(db_movie)
     
-    return UserResponse(**m)
+    # return UserResponse(**m)
 
     
     auth_header = request.headers.get("Authorization")

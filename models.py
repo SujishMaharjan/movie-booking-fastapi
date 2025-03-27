@@ -13,6 +13,7 @@ class Users(Base):
     username = Column(String, index=True)
     password = Column(String)
     permission = Column(String)
+    disabled = Column(Boolean, default=False)
     
     
 
