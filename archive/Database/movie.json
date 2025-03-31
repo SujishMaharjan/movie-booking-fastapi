@@ -1,0 +1,29 @@
+{
+    "Movie1": {
+        "movie_id": "c78e0927-169d-4c4c-b04c-699613e344e2",
+        "movie_name": "Movie1",
+        "movie_description": "Sci-fi action robots",
+        "movie_status": "Available",
+        "total_seats": 200,
+        "booked_seats": 0,
+        "available_seats": 200
+    },
+    "Movie2": {
+        "movie_id": "88dd9d37-645f-4f14-84a7-07aba261d4c9",
+        "movie_name": "Movie2",
+        "movie_description": "Sci-fi action robots",
+        "movie_status": "Available",
+        "total_seats": 200,
+        "booked_seats": 0,
+        "available_seats": 200
+    },
+    "Movie3": {
+        "movie_id": "b15b0ad3-4890-45f2-9b1e-ec961c5f65c1",
+        "movie_name": "Movie3",
+        "movie_description": "Sci-fi action robots",
+        "movie_status": "Available",
+        "total_seats": 200,
+        "booked_seats": 0,
+        "available_seats": 200
+    }
+}

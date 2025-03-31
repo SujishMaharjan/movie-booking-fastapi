@@ -1,0 +1,18 @@
+{
+    "2d950bfd-0474-11f0-ac5b-6018951e3e60": {
+        "person_token": "2d950bfd-0474-11f0-ac5b-6018951e3e60",
+        "permission": "admin"
+    },
+    "5a424299-0474-11f0-832e-6018951e3e60": {
+        "person_token": "5a424299-0474-11f0-832e-6018951e3e60",
+        "permission": "member"
+    },
+    "5227f2e8-0892-11f0-8c5d-6018951e3e60": {
+        "person_token": "5227f2e8-0892-11f0-8c5d-6018951e3e60",
+        "permission": "admin"
+    },
+    "6673711f-0892-11f0-aeee-6018951e3e60": {
+        "person_token": "6673711f-0892-11f0-aeee-6018951e3e60",
+        "permission": "admin"
+    }
+}
