@@ -1,5 +1,4 @@
 import jwt
-from database.database import Database
 from fastapi import FastAPI,HTTPException, status, Depends, Request,Form
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
