@@ -1,5 +1,5 @@
 from enum import StrEnum
-from database import *
+from database.database import *
 
 class MovieStatus(StrEnum):
     available = "Available"

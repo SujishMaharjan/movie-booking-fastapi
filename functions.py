@@ -1,6 +1,11 @@
 import json,os,bcrypt
-from database import *
-from main import DATABASE
+from database.database import *
+from archive.main import DATABASE
+import models
+from fastapi.responses import RedirectResponse, JSONResponse
+import uuid
+
+
 
 
 
@@ -36,23 +41,38 @@ class Functions:
         return details_dict
     
     @staticmethod
-    def login(DATABASE,db_type,username,password):
+    def login(db,username,password):
         try:
-            user_data_json = Database.read_json(DATABASE,db_type)
+            user_data_json ={user.username:user.password for user in  db.query(models.Users).all()}
         except FileNotFoundError as e:
             return {"Error":str(e)}
+        if username not in user_data_json:
+            return JSONResponse(status_code=404,content={"detail":"Incorrect Username or Password"})
+            
         
         # print(user_data_json,username,password)
-        password_from_db = user_data_json[username]["password"]
+        password_from_db = user_data_json[username]
         user_password_bytes = password.encode('utf-8')
         result_password = bcrypt.checkpw(user_password_bytes,eval(password_from_db))
-        if username in user_data_json and result_password:
-        # if username in user_data_json and password == user_data_json[username]["password"]:
-            user_details = user_data_json[username]
-            # print(user_details,user_details["person_token"])
-            return user_details["user_id"]
-        else :
-            return False
+        if not result_password:
+            raise JSONResponse(status_code=404,content={"detail":"Incorrect Username or Password"})
+        generate_token = str(uuid.uuid4())
+        user_instance = db.query(models.Users).filter(models.Users.username == username).first()
+        # return user_instance
+        # breakpoint()
+        global tokens
+        tokens[user_instance.permission].append(generate_token)
+        # breakpoint()
+        return {"token":generate_token,"token_type":"bearer"}
+            
+
+        # if username in user_data_json and result_password:
+        # # if username in user_data_json and password == user_data_json[username]["password"]:
+        #     user_details = user_data_json[username]
+        #     # print(user_details,user_details["person_token"])
+        #     return user_details["user_id"]
+        # else :
+        #     return False
         
     @staticmethod
     def view_movies(DATABASE,db_type):

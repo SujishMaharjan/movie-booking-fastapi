@@ -1,5 +1,5 @@
 from enum import StrEnum
-from database import Database
+from database.database import Database
 import uuid
 from functions import Functions
 from datetime import date

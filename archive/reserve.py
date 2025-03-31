@@ -1,4 +1,4 @@
-from database import *
+from database.database import *
 
 class Reservation:
 
