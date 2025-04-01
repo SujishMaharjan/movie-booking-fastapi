@@ -107,78 +107,63 @@ def reserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[U
 
 
 
-# @app.get('/reserve/{username}')
-# def show_reserve_by_user_name(username:str,request:Request):
-#     auth_header = request.headers.get("Authorization")
-#     if not auth_header or not auth_header.startswith("Bearer"):
-#         print("No token recieved")
-#         raise HTTPException(status_code=401, detail="Unauthorized: No token received!")
-    
-#     token = auth_header.split(" ")[1]
+@app.get('/reserve/',tags=["Reserves"])
+def show_reserve(db:db_dependency,current_user:Annotated[Users, Depends(get_current_user)]):
+    if not user_handler.check_user_member_type(current_user,"member"):
+        return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
+    reserves = reserve_handler.get_all_reserves(db,current_user)
+    return reserves
 
-#     if Functions.validate_token(DATABASE,"db_relation",token,"member"):
-#             reserve_data = Database.read_json(DATABASE,'db_reserves')
-#             filtered_reserve_data = {
-#                             reserve["reserve_id"]:{
-#                                 "reserve_id":reserve["reserve_id"],
-#                                 "username":reserve["username"],
-#                                 "movie_name":reserve["movie_name"],
-#                                 "reserve_seat":reserve["booked_seats"]   
-#                             }
-#                             for _,reserve in reserve_data.items() if reserve["username"]==username}
-
-#             return filtered_reserve_data
-#     else:
-#         return "Error: Invalid Token"
+  
 
 
     
     
 
-# @app.put('/reserve/')
-# def unreserve_movies(reserve:ReserveBase,request:Request):
-#     #get token from headers
-#     auth_header = request.headers.get("Authorization")
-#     if not auth_header or not auth_header.startswith("Bearer"):
-#         print("No token recieved")
-#         raise HTTPException(status_code=401, detail="Unauthorized: No token received!")
+@app.put('/reserve/')
+def unreserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[Users, Depends(get_current_user)]):
+    # #get token from headers
+    # auth_header = request.headers.get("Authorization")
+    # if not auth_header or not auth_header.startswith("Bearer"):
+    #     print("No token recieved")
+    #     raise HTTPException(status_code=401, detail="Unauthorized: No token received!")
     
-#     token = auth_header.split(" ")[1]
+    # token = auth_header.split(" ")[1]
 
-#     if Functions.validate_token(DATABASE,"db_relation",token,"member"):
+    # if Functions.validate_token(DATABASE,"db_relation",token,"member"):
 
-#         # user_data = Database.read_json(DATABASE,'db_users')
-#         # # print(user_data)
-#         # user_details = user_data[reserve.username]
-#         # # print(user_details)
+    #     # user_data = Database.read_json(DATABASE,'db_users')
+    #     # # print(user_data)
+    #     # user_details = user_data[reserve.username]
+    #     # # print(user_details)
 
-#         movie_data = Database.read_json(DATABASE,'db_movies')
-#         if reserve.movie_name not in movie_data:
-#             return "Error:No such Movie"
-#         movie_details = movie_data[reserve.movie_name]
-#         m = Movie(**movie_details)
-#         if reserve.no_of_seats <= m.booked_seats:
-#             pass
-#         else:    
-#             return {"Error": f"Seats to unreserved greater than {m.booked_seats} reserved seats"}
+    #     movie_data = Database.read_json(DATABASE,'db_movies')
+    #     if reserve.movie_name not in movie_data:
+    #         return "Error:No such Movie"
+    #     movie_details = movie_data[reserve.movie_name]
+    #     m = Movie(**movie_details)
+    #     if reserve.no_of_seats <= m.booked_seats:
+    #         pass
+    #     else:    
+    #         return {"Error": f"Seats to unreserved greater than {m.booked_seats} reserved seats"}
 
 
-#         reserve_data = Database.read_json(DATABASE,'db_reserves')
-#         if reserve.reserve_id not in reserve_data:
-#             return {"Error": "No such reserve_id"}
+    #     reserve_data = Database.read_json(DATABASE,'db_reserves')
+    #     if reserve.reserve_id not in reserve_data:
+    #         return {"Error": "No such reserve_id"}
 
-#         reserve_details= reserve_data[reserve.reserve_id]
+    #     reserve_details= reserve_data[reserve.reserve_id]
 
-#         r = Reservation(**reserve_details)
-#         if r.unreserve_seats(DATABASE,"db_reserves",reserve.no_of_seats):
-#              if m.update_booked_seats(DATABASE,"db_movies",0,reserve.no_of_seats):
-#                 return {'reserve_id':reserve.reserve_id,'username':reserve.username,'movie_name':reserve.movie_name,'booked_seats':r.booked_seats,'message':"Successfully UnReserved seats"}
-#         else:
-#             return {"Error":"Failed to Unreserved booked seats"}
+    #     r = Reservation(**reserve_details)
+    #     if r.unreserve_seats(DATABASE,"db_reserves",reserve.no_of_seats):
+    #          if m.update_booked_seats(DATABASE,"db_movies",0,reserve.no_of_seats):
+    #             return {'reserve_id':reserve.reserve_id,'username':reserve.username,'movie_name':reserve.movie_name,'booked_seats':r.booked_seats,'message':"Successfully UnReserved seats"}
+    #     else:
+    #         return {"Error":"Failed to Unreserved booked seats"}
 
              
-#     else:
-#         return {"Error":"Invalid Token"}
+    # else:
+    #     return {"Error":"Invalid Token"}
  
 
                         

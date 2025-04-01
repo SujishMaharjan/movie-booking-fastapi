@@ -2,6 +2,7 @@ from models import Users,Movies,Reservations
 from fastapi.responses import JSONResponse
 from model import schemas
 
+
 def check_same_username_with_same_movie(db,username,movie_name):
     user_id = db.query(Users).filter(Users.username == username).first().user_id
     movie_id = db.query(Movies).filter(Movies.movie_name == movie_name).first().movie_id
@@ -45,3 +46,12 @@ def add_reservation(db, reserve, current_user):
     db.commit()
     db.refresh(movie)
     return True
+
+def get_all_reserves(db,current_user):
+    reserves = db.query(Reservations).filter(Reservations.user_id == current_user.user_id).all()
+    reserves_response= [{"username":current_user.username,
+                         "movie_name":db.query(Movies).filter(Movies.movie_id == reserve.movie_id).first().movie_name,
+                         "user_reserve_seats":reserve.user_reserve_seats
+                         }
+                        for reserve in reserves]
+    return reserves_response

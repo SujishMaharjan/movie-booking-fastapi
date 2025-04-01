@@ -56,7 +56,7 @@ class ReserveBase(BaseModel):
 class ReserveResponse(BaseModel):
     username: str
     movie_name: str
-    no_of_seats: int
+    user_reserve_seats: int
     # message: Optional[str] = None
 
     
