@@ -1,5 +1,6 @@
 from models import Movies
 from model.schemas import MovieResponseAvailable
+from fastapi.responses import JSONResponse
 
 def get_movie(db,movie_name):
     movie_names = [movie.movie_name for movie in db.query(Movies).all()]
@@ -16,8 +17,9 @@ def get_all_movies_available(db):
     return filtered_response_movies
 
 def check_movie_available(db,movie_name):
-    movie = db.query(Movies).filter(Movies.movie_name == movie_name and Movies.movie_status =="Available").first()
-    return movie
+    movie = db.query(Movies).filter((Movies.movie_name == movie_name)& (Movies.movie_status =="Available")).first()
+    return bool(movie)
+    
 
 
     
@@ -25,7 +27,10 @@ def check_movie_available(db,movie_name):
     
 def check_movie_exist(db,movie_name):
     movie = db.query(Movies).filter(Movies.movie_name == movie_name).first()
-    return movie
+    return bool(movie)
+
+        
+
 
 def add_movie(db,movie):
     movie_dict= movie.model_dump()
