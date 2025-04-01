@@ -27,12 +27,11 @@ models.Base.metadata.create_all(bind=engine)
 
 @app.post('/users/',tags=["users"])
 async def create_users(user: UsersBase, db:db_dependency):
-    # breakpoint()
+
     if user_handler.check_user_exist(db,user.username):
         return JSONResponse(status_code=409, content={'detail':'Username already exist'})
     if user_handler.add_user(db,user):
         return UserResponse(**user.model_dump())
-    
     
 
 @app.post('/login/',tags=["users"]) 
@@ -50,21 +49,14 @@ def login_user( db:db_dependency,form_data: OAuth2PasswordRequestForm=Depends())
     
 
 def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
-    credentials_exception = JSONResponse(
-        status_code=401,
-        content={
-            "detail":"Could not validate credentials"
-        }
-    )
-    # breakpoint()
     try:
         payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
         username :str = payload.get('sub')
-        # breakpoint()
+        
         if username is None:
             return JSONResponse(status_code=404,content={'detail':"username not found"})
         token_data = TokenData(username=username)
-        # breakpoint()
+        
         # return token_data.username
     except InvalidTokenError:
         return JSONResponse(content={'detail':"Invalid Token"})
@@ -76,14 +68,14 @@ def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_sc
 @app.post('/movies/',tags=["movies"])
 async def add_movies(db:db_dependency,movie :MovieBase, current_user:Annotated[Users, Depends(get_current_user)]):
     #checks current_user has permission role "admin" as only admin can add movies
-    # breakpoint()
     if not user_handler.check_user_member_type(current_user,"admin"):
         return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
-    # checks if there is same movie exist 
     if movie_handler.check_movie_exist(db,movie.movie_name):
         return JSONResponse(status_code=409, content={'detail':'Movie already exist'})
-    if movie_handler.add_movie(db,movie):
-        return MovieResponse(**movie.model_dump())
+    if not movie_handler.add_movie(db,movie):
+        return JSONResponse(content={'detail':"Error in adding movies"})
+
+    return MovieResponse(**movie.model_dump())
     
  
 @app.get('/movies/',tags=["movies"])
@@ -93,78 +85,43 @@ async def show_available_movies(db:db_dependency):
 
 
 @app.post('/reserve/',tags=["Reserves"])
-def reserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[Users, Depends(get_current_user)]):
-    # breakpoint()
+async def reserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[Users, Depends(get_current_user)]):
     if not user_handler.check_user_member_type(current_user,"member"):
         return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
-    # movie = movie_handler.check_movie_available(reserve.movie_name, movies=Depends(show_available_movies))
     if not movie_handler.check_movie_available(db,reserve.movie_name):
         return JSONResponse(status_code=404, content={'detail':'Movie Not Available'})
+    if not reserve_handler.check_valid_seats_to_reserve(db,reserve):
+        return JSONResponse(content={'detail':f"Invalid seats entered"})
     if not reserve_handler.add_reservation(db,reserve,current_user):
         return JSONResponse(content={'detail':"Error in reserving movies"})
-    return ReserveResponse(**reserve.model_dump(),username=current_user.username)
 
-
+    return {"username":current_user.username,"movie_name":reserve.movie_name,"reserved_seats":reserve.no_of_seats}
 
 
 @app.get('/reserve/',tags=["Reserves"])
-def show_reserve(db:db_dependency,current_user:Annotated[Users, Depends(get_current_user)]):
+async def show_reserve(db:db_dependency,current_user:Annotated[Users, Depends(get_current_user)]):
     if not user_handler.check_user_member_type(current_user,"member"):
         return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
-    reserves = reserve_handler.get_all_reserves(db,current_user)
-    return reserves
+    return reserve_handler.get_all_reserves(db,current_user)
 
   
-
-
-    
     
 
-@app.put('/reserve/')
-def unreserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[Users, Depends(get_current_user)]):
-    # #get token from headers
-    # auth_header = request.headers.get("Authorization")
-    # if not auth_header or not auth_header.startswith("Bearer"):
-    #     print("No token recieved")
-    #     raise HTTPException(status_code=401, detail="Unauthorized: No token received!")
-    
-    # token = auth_header.split(" ")[1]
-
-    # if Functions.validate_token(DATABASE,"db_relation",token,"member"):
-
-    #     # user_data = Database.read_json(DATABASE,'db_users')
-    #     # # print(user_data)
-    #     # user_details = user_data[reserve.username]
-    #     # # print(user_details)
-
-    #     movie_data = Database.read_json(DATABASE,'db_movies')
-    #     if reserve.movie_name not in movie_data:
-    #         return "Error:No such Movie"
-    #     movie_details = movie_data[reserve.movie_name]
-    #     m = Movie(**movie_details)
-    #     if reserve.no_of_seats <= m.booked_seats:
-    #         pass
-    #     else:    
-    #         return {"Error": f"Seats to unreserved greater than {m.booked_seats} reserved seats"}
+@app.put('/reserve/',tags=["Reserves"])
+async def unreserve_movies(db:db_dependency,reserve:ReserveBase,current_user:Annotated[Users, Depends(get_current_user)]):
+    if not user_handler.check_user_member_type(current_user,"member"):
+        return JSONResponse(status_code=401,content={'detail':"Unauthorized User"})
+    db_reserve = reserve_handler.get_reserve_from_db(db,current_user,reserve.movie_name)
+    if not db_reserve:
+        return JSONResponse(status_code=404, content={'detail':f'No Reservations done in {reserve.movie_name} found by {current_user.username}'})
+    before_reserve_seats = db_reserve.user_reserve_seats
+    if not reserve_handler.check_valid_seats_to_unreserve(db,db_reserve,reserve.no_of_seats):
+        JSONResponse(content={'detail':f"Invalid seats entered, Reserved  Seats: {db_reserve.user_reserve_seats}"})
+    if not reserve_handler.unreserve_seats(db,db_reserve,reserve.no_of_seats,current_user):
+        return JSONResponse(content={'detail':"Error in reserving movies"})
+    return UnReserveResponse(username=current_user.username,movie_name=reserve.movie_name,before_reserve_seats=before_reserve_seats,update_reserve_seats=db_reserve.user_reserve_seats)
 
 
-    #     reserve_data = Database.read_json(DATABASE,'db_reserves')
-    #     if reserve.reserve_id not in reserve_data:
-    #         return {"Error": "No such reserve_id"}
-
-    #     reserve_details= reserve_data[reserve.reserve_id]
-
-    #     r = Reservation(**reserve_details)
-    #     if r.unreserve_seats(DATABASE,"db_reserves",reserve.no_of_seats):
-    #          if m.update_booked_seats(DATABASE,"db_movies",0,reserve.no_of_seats):
-    #             return {'reserve_id':reserve.reserve_id,'username':reserve.username,'movie_name':reserve.movie_name,'booked_seats':r.booked_seats,'message':"Successfully UnReserved seats"}
-    #     else:
-    #         return {"Error":"Failed to Unreserved booked seats"}
-
-             
-    # else:
-    #     return {"Error":"Invalid Token"}
- 
 
                         
                         

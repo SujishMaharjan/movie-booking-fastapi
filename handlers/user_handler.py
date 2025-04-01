@@ -18,7 +18,9 @@ def create_hash_value(password):
 
 def check_user_exist(db,username):
     user = db.query(models.Users).filter(models.Users.username == username).first()
-    return user
+    return bool(user)
+        
+    
 
 def add_user(db, user):
     user_dict = user.model_dump()
@@ -29,7 +31,7 @@ def add_user(db, user):
     return True
 
 def get_user(db, username: str):
-    return db.query(models.Users).filter(models.Users.username == username).one()
+    return db.query(models.Users).filter(models.Users.username == username).first()
 
 def verify_password(plain_password, password_from_db):
     plain_password_bytes = plain_password.encode('utf-8')
@@ -88,4 +90,7 @@ def create_access_token(data: dict,ALGORITHM,SECRET_KEY,expires_delta: timedelta
 
 def check_user_member_type(user,member_type):
     if user.permission == member_type:
-        return user.permission
+        return True
+    else:
+        False
+        
