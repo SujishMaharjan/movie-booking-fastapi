@@ -5,12 +5,16 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Optional,Annotated,List
 from datetime import date, datetime,timedelta,timezone
 from database.database import engine, SessionLocal, get_db
-from jwt.exceptions import JWTException
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 from handlers import movie_handler, user_handler,reserve_handler
 from model.schemas import *
 import models as models
 from models import Users
+from log import *
+from decouple import config
+# from handlers.user_handler import get_current_user
+
 
 
 
@@ -22,7 +26,9 @@ db_dependency = Annotated[Session, Depends(get_db)]
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login',scheme_name="JWT")
 
 
+
 app = FastAPI()
+
 models.Base.metadata.create_all(bind=engine)
 
 @app.post('/users/',tags=["users"])
@@ -58,8 +64,8 @@ def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_sc
         token_data = TokenData(username=username)
         
         # return token_data.username
-    except JWTException as e:
-        return JSONResponse(content={'detail':str(e)})
+    except JWTException :
+        return JSONResponse(content={'detail':'Invalid key'})
     user = user_handler.get_user(db,token_data.username)
     if not user:
         return JSONResponse(status_code=401,content={'detail':'Could not validate Credentials'})
