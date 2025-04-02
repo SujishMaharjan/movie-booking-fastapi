@@ -1,5 +1,3 @@
-# movie-booking-fastapi
-
 # FastAPI Movie Booking System
 
 
