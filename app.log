@@ -1,0 +1,9 @@
+2025-04-02 11:59 - WARNING - save me
+2025-04-02 11:59 - CRITICAL - critical
+2025-04-02 12:00 - ERROR - Some Error2025-04-02 12:02 - ERROR - Some error
+
+
+2025-04-02 12:02 - ERROR - Some error
+2025-04-02 12:07 - DEBUG - This is a debug message
+2025-04-02 12:10 - DEBUG - samara
+2025-04-02 12:11 - DEBUG - name='samara'

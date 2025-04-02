@@ -6,6 +6,8 @@ from typing import Annotated
 from model.schemas import Token,TokenData
 from models import Users
 import models
+# from movie_booking_fastapi.server import db_dependency,SECRET_KEY,ALGORITHM,ACCESS_TOKEN_EXPIRE_MINUTES
+
 
 
 def create_hash_value(password):
@@ -65,3 +67,19 @@ def check_user_member_type(user,member_type):
     else:
         False
         
+# def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
+#     try:
+#         payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
+#         username :str = payload.get('sub')
+        
+#         if username is None:
+#             return JSONResponse(status_code=404,content={'detail':"username not found"})
+#         token_data = TokenData(username=username)
+        
+#         # return token_data.username
+#     except JWTException as e:
+#         return JSONResponse(content={'detail':str(e)})
+#     user = get_user(db,token_data.username)
+#     if not user:
+#         return JSONResponse(status_code=401,content={'detail':'Could not validate Credentials'})
+#     return user
