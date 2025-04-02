@@ -1,11 +1,12 @@
-import models,bcrypt,jwt
+import bcrypt,jwt
 from datetime import date, datetime,timedelta,timezone
 from fastapi.responses import JSONResponse
 from fastapi import Depends
 from typing import Annotated
 from model.schemas import Token,TokenData
 from models import Users
-from jwt.exceptions import InvalidTokenError
+import models
+
 
 def create_hash_value(password):
         bytes = password.encode("utf-8")
@@ -57,36 +58,6 @@ def create_access_token(data: dict,ALGORITHM,SECRET_KEY,expires_delta: timedelta
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
-#     credentials_exception = JSONResponse(
-#         status_code=401,
-#         content={
-#             "detail":"Could not validate credentials"
-#         }
-#     )
-#     # breakpoint()
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
-#         username :str = payload.get('sub')
-#         # breakpoint()
-#         if username is None:
-#             return JSONResponse(status_code=404,content={'detail':"username not found"})
-#         token_data = TokenData(username=username)
-#         # return token_data.username
-#     except InvalidTokenError:
-#         return JSONResponse(content={'detail':"Invalid Token"})
-#     user = get_user(db,token_data.username)
-#     if user is None:
-#         raise credentials_exception
-#     return user
-
-
-# async def get_current_active_user(current_user: Annotated[Users, Depends(get_current_user)]):
-#     # breakpoint()
-#     if current_user.disabled:
-#         return JSONResponse(status_code=400,content={'detail':'Inactive user'})
-#     return current_user
-    
 
 def check_user_member_type(user,member_type):
     if user.permission == member_type:

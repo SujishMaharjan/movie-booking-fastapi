@@ -28,8 +28,7 @@ class Movies(Base):
     reserve_seats = Column(Integer,index=True)
     available_seats = Column(Integer,index=True)
 
-    # reservations = Relationship("Reservations", back_populates="movies")
-
+    
 
 
 
@@ -41,5 +40,4 @@ class Reservations(Base):
     movie_id = Column(Integer, ForeignKey("movies.movie_id"),index=True)
     user_reserve_seats = Column(Integer)
 
-    # user = Relationship("Users", back_populates="reservations")
-    # movie = Relationship("Movies", back_populates="reservations")
+   
