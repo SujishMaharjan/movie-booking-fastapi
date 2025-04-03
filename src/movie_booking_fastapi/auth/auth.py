@@ -5,10 +5,13 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from typing import Annotated
 from fastapi.responses import JSONResponse
-from database.database import database,models,get_db
-from handlers.user_handler import get_user
+from ..database import models
+from ..database.models import Users
+from ..database.database import get_db
+from ..handlers.user_handler import get_user
 from jwt.exceptions import InvalidTokenError
-from model import TokenData
+from ..model import Token,TokenData
+from movie_booking_fastapi.exceptions import InvalidUserNamePasswordError
 
 
 
@@ -30,14 +33,6 @@ def verify_password(plain_password, password_from_db):
     plain_password_bytes = plain_password.encode('utf-8')
     return bcrypt.checkpw(plain_password_bytes,eval(password_from_db))
     
-
-def authenticate_user(db, username:str, password:str):
-    user = get_user(db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.password):
-        return False
-    return user
 
 
 def create_access_token(data: dict,ALGORITHM,SECRET_KEY,expires_delta: timedelta | None = None):
@@ -68,3 +63,16 @@ def get_current_user(db:Annotated[Session, Depends(get_db)], token: Annotated[st
     if not user:
         return JSONResponse(status_code=401,content={'detail':'Could not validate Credentials'})
     return user
+
+
+def authenticate_user(db,username,password):
+    user = get_user(db, username)
+    if not user or  not verify_password(password, user.password):
+        raise InvalidUserNamePasswordError
+    access_token = create_access_token(
+        data={'sub':username},
+        ALGORITHM=ALGORITHM,
+        SECRET_KEY=SECRET_KEY,
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return Token(access_token=access_token,token_type='bearer')

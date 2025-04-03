@@ -2,20 +2,11 @@ import bcrypt,jwt
 from datetime import date, datetime,timedelta,timezone
 from fastapi.responses import JSONResponse
 from fastapi import Depends
-from typing import Annotated
-from model import *
-from database.models import Users
-import database.models as models
-from handlers import user_handler
-import logger
-from exceptions import *
-
-# from movie_booking_fastapi.server import db_dependency,SECRET_KEY,ALGORITHM,ACCESS_TOKEN_EXPIRE_MINUTES
+from ..model import *
+from ..database.models import Users
+from ..exceptions import *
 
 
-
-
-    
 
 
 def create_hash_value(password):
@@ -26,7 +17,7 @@ def create_hash_value(password):
         return hash
 
 def check_user_exist(db,username):
-    user = db.query(models.Users).filter(models.Users.username == username).first()
+    user = db.query(Users).filter(Users.username == username).first()
     return bool(user)
         
     
@@ -34,13 +25,13 @@ def check_user_exist(db,username):
 def add_user(db, user):
     user_dict = user.model_dump()
     user_dict['password'] = str(create_hash_value(user_dict['password']))
-    user_data = models.Users(**user_dict)
+    user_data = Users(**user_dict)
     db.add(user_data)
     db.commit()
     return True
 
 def get_user(db, username: str):
-    return db.query(models.Users).filter(models.Users.username == username).first()
+    return db.query(Users).filter(Users.username == username).first()
 
 def verify_password(plain_password, password_from_db):
     plain_password_bytes = plain_password.encode('utf-8')
@@ -85,19 +76,3 @@ def create_user(db,user,logger):
         return UserResponse(**user.model_dump())
     return None
         
-# def get_current_user(db:db_dependency, token: Annotated[Users, Depends(oauth2_scheme)]):
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
-#         username :str = payload.get('sub')
-        
-#         if username is None:
-#             return JSONResponse(status_code=404,content={'detail':"username not found"})
-#         token_data = TokenData(username=username)
-        
-#         # return token_data.username
-#     except JWTException as e:
-#         return JSONResponse(content={'detail':str(e)})
-#     user = get_user(db,token_data.username)
-#     if not user:
-#         return JSONResponse(status_code=401,content={'detail':'Could not validate Credentials'})
-#     return user

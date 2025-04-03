@@ -1,6 +1,6 @@
-from database.models import Users,Movies,Reservations
+from ..database.models import Users,Movies,Reservations
 from fastapi.responses import JSONResponse
-from model import schemas
+from ..model import schemas
 
 
 def check_same_username_with_same_movie(db,username,movie_name):

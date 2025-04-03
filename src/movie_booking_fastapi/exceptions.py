@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
-from logger import logger
+from movie_booking_fastapi.logger import logger
 
 
 class UserNotFoundException(HTTPException):
@@ -18,6 +18,14 @@ class UserCreationError(HTTPException):
     def __init__(self, detail: str ="An Unexpected Error while creating user"):
         logger.error(f"{detail}")
         super().__init__(status_code=500, detail= detail)
+
+class InvalidUserNamePasswordError(HTTPException):
+    def __init__(self, detail: str="Invalid Username or Password"):
+        logger.error(f"{detail}")
+        super().__init__(status_code=401, detail= detail)
+
+
+
 
 # def raise_not_found_exception(detial: str = "Resource not found"):
 #     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=detail)
