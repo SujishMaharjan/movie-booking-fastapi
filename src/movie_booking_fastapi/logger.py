@@ -28,6 +28,9 @@ class CustomLog:
 
     def get_logger(self):
         return self.logger
+    
+
+logger = CustomLog().get_logger()
 
 
 

@@ -1,5 +1,6 @@
-from database.database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, ForeignKey,Date
+from .database import Base
+from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, ForeignKey, DateTime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Relationship
 
 
@@ -7,13 +8,14 @@ class Users(Base):
     __tablename__ = "users"
 
     user_id = Column(Integer,primary_key=True,index=True)
-    name = Column(String, index=True)
-    date_of_birth =Column(Date)
+    name = Column(String, index=True,nullable=False)
+    date_of_birth =Column(DateTime)
     email = Column(String)
     username = Column(String, index=True)
     password = Column(String)
     permission = Column(String)
     disabled = Column(Boolean, default=False)
+    # created_at =Column(DateTime, default=datetime.now(timezone.utc))
     
     
 
