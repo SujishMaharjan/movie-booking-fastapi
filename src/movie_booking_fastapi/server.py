@@ -8,7 +8,7 @@ from database.database import engine, SessionLocal, get_db
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 from handlers import movie_handler, user_handler,reserve_handler
-from model.schemas import *
+from model import *
 import models as models
 from models import Users
 from logger import *
