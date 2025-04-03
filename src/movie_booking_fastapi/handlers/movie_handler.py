@@ -1,5 +1,5 @@
-from database.models import Movies
-from model.schemas import MovieResponseAvailable
+from ..database.models import Movies
+from ..model.schemas import MovieResponseAvailable
 from fastapi.responses import JSONResponse
 
 def get_movie(db,movie_name):
