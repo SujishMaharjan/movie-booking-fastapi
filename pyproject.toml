@@ -29,3 +29,6 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/movie_booking_fastapi"]
+
+[tool.rye.scripts]
+start = "fastapi dev src/movie_booking_fastapi/server.py"
