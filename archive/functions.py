@@ -1,7 +1,7 @@
 import json,os,bcrypt
 from database import *
 from archive.main import DATABASE
-import models as models
+import database.models as models
 from fastapi.responses import RedirectResponse, JSONResponse
 import uuid
 

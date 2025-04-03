@@ -1,4 +1,4 @@
-from models import Users,Movies,Reservations
+from database.models import Users,Movies,Reservations
 from fastapi.responses import JSONResponse
 from model import schemas
 
