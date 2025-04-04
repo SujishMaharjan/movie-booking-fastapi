@@ -1,11 +1,9 @@
 import bcrypt,jwt
 from datetime import date, datetime,timedelta,timezone
-from fastapi.responses import JSONResponse
-from fastapi import Depends
-from ..model import *
+from ..model.responses.user import UserResponse
 from ..database.models import Users
 from ..exceptions import *
-
+from ..log import logger
 
 
 
@@ -68,7 +66,7 @@ def check_user_member_type(user,member_type) -> bool:
         False
 
 
-def create_user(db,user,logger):
+def create_user(db,user):
     if check_user_exist(db,user.username):
         raise UserExistError
     if add_user(db,user):
