@@ -21,7 +21,7 @@ class CustomLog:
 
         #File Handler
         file_handler = RotatingFileHandler(log_file, maxBytes=1000, backupCount=5)
-        file_handler.setLevel(level)
+        file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 

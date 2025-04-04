@@ -5,21 +5,24 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from typing import Annotated
 from fastapi.responses import JSONResponse
-from ..database import models
-from ..database.models import Users
 from ..database.database import get_db
 from ..handlers.user_handler import get_user
 from jwt.exceptions import InvalidTokenError
-from ..model import Token,TokenData
-from movie_booking_fastapi.exceptions import InvalidUserNamePasswordError
+from ..model.token import Token, TokenData
+from ..exceptions import InvalidUserNamePasswordError
+from decouple import config
 
 
 
-SECRET_KEY = "00bdd306967a61fdb05237b3adf7e7061de1f80cecddad868435c17123b4b463"
+
+# SECRET_KEY = config("secret")
+# ALGORITHM = config("algorithm")
+# ACCESS_TOKEN_EXPIRE_MINUTES = config("access_token_expiree_miutes")
+SECRET_KEY="00bdd306967a61fdb05237b3adf7e7061de1f80cecddad868435c17123b4b463"
 ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/login',scheme_name="JWT")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/users/login',scheme_name="JWT")
 
 def create_hash_value(password):
         bytes = password.encode("utf-8")
