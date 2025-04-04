@@ -15,12 +15,10 @@ from decouple import config
 
 
 
-# SECRET_KEY = config("secret")
-# ALGORITHM = config("algorithm")
-# ACCESS_TOKEN_EXPIRE_MINUTES = config("access_token_expiree_miutes")
-SECRET_KEY="00bdd306967a61fdb05237b3adf7e7061de1f80cecddad868435c17123b4b463"
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES=30
+SECRET_KEY = config("secret")
+ALGORITHM = config("algorithm")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(config("access_token_expiree_miutes"))
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/users/login',scheme_name="JWT")
 
