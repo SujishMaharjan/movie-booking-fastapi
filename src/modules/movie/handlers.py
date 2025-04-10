@@ -9,18 +9,19 @@ from src.api.entrypoint.movie.models import MovieAddModel
 
 
 
-def get_movies():
-    movies = get_all_movies_from_db()
+def get_all_movies(db):
+    movies = get_all_movies_from_db(db)
     if not movies:
-        raise MovieNotFoundException
-    all_movie_response = [AllMovieResponse(**movie.model_dump()) for movie in movies]
+        return []
+    # breakpoint()
+    all_movie_response = [AllMovieResponse(**movie.__dict__) for movie in movies]
     return all_movie_response
 
 
 
 
-def check_duplicate_movie(movie_name):
-    movie = get_movie_by_movie_name(movie_name)
+def check_duplicate_movie(db,movie_name):
+    movie = get_movie_by_movie_name(db,movie_name)
     if movie:
         logger.warning("Trying to create duplicate movie")
         raise DuplicateMovieException(
@@ -30,25 +31,25 @@ def check_duplicate_movie(movie_name):
         return None
     
 
-def persist_movie_to_db(model: MovieAddModel):
-    data = model.model_dump()
+def persist_movie_to_db(db,model: MovieAddModel):
+    data = Movies(**model.model_dump())
     movie = save_movie_to_db(db,data)
     if not movie:
          logger.error("Failed to save user in database")
          raise FailedToSaveMovieException(
               f"An Unexpected error occured while creating user with username {data.username}"
          )
-    return MovieAddResponse(**movie)
+    return MovieAddResponse(**movie.__dict__)
 
-def get_all_movies_available():
-    movies = get_all_movies_available_from_db()
+def get_all_movies_available(db):
+    movies = get_all_movies_available_from_db(db)
     if not movies:
-        raise MovieNotFoundException
-    available_movies = [MovieResponseAvailable(**vars(movie)) for movie in movies]
+        return []
+    available_movies = [MovieResponseAvailable(**movie.__dict__) for movie in movies]
     return available_movies
 
-def is_movie_available_to_reserve(movie_name,no_of_seats) -> bool:
-    movie: Movies = get_movie_by_movie_name(movie_name)
+def is_movie_available_to_reserve(db,movie_name,no_of_seats) -> bool:
+    movie: Movies = get_movie_by_movie_name(db,movie_name)
     if not movie:
         raise MovieNotFoundException
     if movie.available_seats < no_of_seats:
@@ -72,3 +73,10 @@ def update_movie_after_unreserve(movie,no_of_seats):
     db.commit()
     db.refresh(movie)
     return True
+
+
+def get_movie_by_id(db,movie_id):
+    movie = get_movie_from_db_by_id(db,movie_id)
+    if not movie:
+        raise MovieNotFoundException("No such Id")
+    return movie

@@ -6,7 +6,7 @@ def get_reserve_from_db(id):
     reserve = db.query(Reservations).filter((Reservations.id == id)).first()
     return reserve
 
-def get_reserve_from_db_by_userid_movie_id(movie_id)
+def get_reserve_from_db_by_userid_movie_id(movie_id):
     reserve = db.query(Reservations).filter((Reservations.movie_id == movie_id)).first()
     return reserve
 
@@ -27,8 +27,20 @@ def save_reserve_to_db(data):
     db.commit()
     return get_reserve_from_db(data.id)
 
+def update_reserve_seat_in_db(db,reserve_id,update_reserve_seats):
+    db.query(Reservations).filter(Reservations.reserve_id == reserve_id).update(
+        {Reservations.user_reserve_seats: update_reserve_seats},  # <-- new value
+        synchronize_session=False
+    )
+    db.commit()
+    return reserve_id
+
+
 
 def get_reserve_from_db_by_user_id(user_id):
     reserve = db.query(Reservations).filter(Reservations.user_id == user_id).all()
     return reserve
+
+def get_all_reserves_from_db(db):
+    return db.query(Reservations).all()
     

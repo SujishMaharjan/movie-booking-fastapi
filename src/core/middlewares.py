@@ -33,10 +33,20 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 status_code=422,
                 content={"detail": str(e)}
             )
+        except InvalidLoginException as e:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": str(e)}
+            )
+        except InvalidMemberTypeException as e:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": str(e)}
+            )
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"detail": "An unexpected error occurred"}
+                content={"detail": f"Internal Server Error, {type(e)}, {str(e)}"}
             )
 
 

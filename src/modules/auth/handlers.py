@@ -2,7 +2,7 @@ import jwt
 from src.core.log_config import logger
 from src.modules.auth.exceptions import DuplicateUserException, FailedToSaveUserException
 from src.modules.auth.queries import save_user_to_db
-from src.modules.user.queries import get_user
+from src.modules.user.queries import get_user_from_db_by_username
 from src.api.entrypoint.auth.models import UserRegisterModel,TokenData
 from src.api.entrypoint.auth.responses import UserRegisterResponse
 from datetime import datetime, timezone, timedelta
@@ -19,7 +19,7 @@ from src.db_schemas.user import Users
 
 def check_duplicate_user(db,username):
     # breakpoint()
-    user = get_user(db,username)
+    user = get_user_from_db_by_username(db,username)
     # breakpoint()
     if user:
         logger.warning("Trying to create duplicate user")
@@ -73,8 +73,8 @@ def get_current_user(db:db_dependency, token: Annotated[str, Depends(oauth2_sche
         token_data = TokenData(username=username)
         
     except Exception:
-        raise InvalidTokenException
-    user = get_user(db,token_data.username)
+        raise InvalidTokenException("Invalid Token")
+    user = get_user_from_db_by_username(db,token_data.username)
 
     if not user:
         raise UserNotFoundException

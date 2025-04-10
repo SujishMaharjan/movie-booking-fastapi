@@ -11,5 +11,8 @@ class ReserveUserResponse(BaseModel):
     movie_name : str
     user_reserve_seats: str
 
+class ListAllReserveResponse(BaseModel):
+    pass
+
 
 

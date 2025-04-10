@@ -6,6 +6,7 @@ from src.modules.user.handlers import check_user_member_type
 from src.modules.reserve.handlers import *
 from src.modules.movie.handlers import is_movie_available_to_reserve
 from src.db_schemas.user import Users
+from src.core.extensions import db_dependency
 
 
 router = APIRouter(
@@ -16,11 +17,12 @@ router = APIRouter(
 @router.get("/")
 async def get_reserve_resource(
     request: Request,
+    db:db_dependency,
     current_user:Annotated[Users, Depends(get_current_user)]):
 
     logger.info("Reserve endpoint accessed")
-    check_user_member_type(current_user,"member")
-    reserves = list_reserves_by_user()
+    check_user_member_type(current_user,"admin")
+    reserves = list_out_all_reserves(db)
     return reserves
 
 
@@ -34,8 +36,8 @@ def create_reserve_resource(
     current_user:Annotated[Users, Depends(get_current_user)]):
 
     check_user_member_type(current_user,"member")
-    is_movie_available_to_reserve(model.movie_name,model.no_of_seats)
-    reserve = persist_reserve_to_db(model,current_user)
+    is_movie_available_to_reserve(db,model.movie_name,model.no_of_seats)
+    reserve = persist_reserve_to_db(db,model,current_user)
     return reserve
 
 
