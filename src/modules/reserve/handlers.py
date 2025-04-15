@@ -68,7 +68,7 @@ def persist_reserve_to_db(db,model,current_user):
 
 def persist_unreserve_to_db(db,movie,no_of_seats,reserve:Reservations,current_user):
     before_reserve_seats = reserve.user_reserve_seats
-    breakpoint()
+
     try:
         delete_success = False
         user_reserve_seats = before_reserve_seats - no_of_seats
@@ -80,12 +80,11 @@ def persist_unreserve_to_db(db,movie,no_of_seats,reserve:Reservations,current_us
 
         success = update_movie_after_unreserve(db,movie,no_of_seats)
 
-        if (not delete_success or not bool(reserve_id)) and not success:
+        if not ((delete_success or bool(reserve_id)) and success): 
             raise FailedToSaveReserveException("Failed to Unreserve Movie")
 
-
         db.commit()
-        return ReserveResponse(reserve_id = reserve_id,
+        return ReserveResponse(reserve_id = reserve.reserve_id,
                                username= current_user.username,
                                movie_name=movie.movie_name,
                                before_reserve_seats=before_reserve_seats,
