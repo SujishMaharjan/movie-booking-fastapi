@@ -12,6 +12,9 @@ dependencies = [
     "psycopg2>=2.9.10",
     "python-decouple>=3.8",
     "pyjwt>=2.10.1",
+    "pylint>=3.3.6",
+    "black>=25.1.0",
+    "pydantic-settings>=2.8.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
