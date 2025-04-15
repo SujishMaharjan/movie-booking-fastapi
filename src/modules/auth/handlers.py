@@ -7,6 +7,7 @@ from src.api.entrypoint.auth.models import UserRegisterModel,TokenData
 from src.api.entrypoint.auth.responses import UserRegisterResponse
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
+from src.core.config import oauth2_scheme
 from src.core.config import SECRET_KEY, ALGORITHM, oauth2_scheme
 from fastapi import Depends
 from typing import Annotated

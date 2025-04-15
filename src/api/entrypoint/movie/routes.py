@@ -24,7 +24,7 @@ async def list_movies_resource(request: Request,db:db_dependency):
     return movies
     
 
-@router.post("/",status_code=401)
+@router.post("/")
 async def add_movies_resource(
     request: Request,
     model: models.MovieAddModel ,

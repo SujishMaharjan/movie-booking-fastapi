@@ -6,6 +6,7 @@ class AllUserResponse(BaseModel):
     user_id: int
     username: str
     name: str
+    permission: MemberType
 
 class UserIdResponse(BaseModel):
     user_id : int

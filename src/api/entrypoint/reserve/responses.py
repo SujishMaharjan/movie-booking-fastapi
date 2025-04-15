@@ -1,10 +1,12 @@
 from pydantic import BaseModel
 
-class ReserveUpdateResponse(BaseModel):
+class ReserveResponse(BaseModel):
+    reserve_id: int
     username: str
     movie_name: str
+    before_reserve_seats: int | None = None
     user_reserve_seats: int
-    before_reserve_seats: int 
+    
 
 class ReserveUserResponse(BaseModel):
     reserve_id: int

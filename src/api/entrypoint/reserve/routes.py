@@ -4,7 +4,7 @@ from typing import Annotated
 from src.modules.auth.handlers import get_current_user
 from src.modules.user.handlers import check_user_member_type
 from src.modules.reserve.handlers import *
-from src.modules.movie.handlers import is_movie_available_to_reserve
+from src.modules.movie.handlers import get_movie_available_by_movie_name
 from src.db_schemas.user import Users
 from src.core.extensions import db_dependency
 
@@ -33,6 +33,7 @@ async def get_reserve_resource(
 def create_reserve_resource(
     request: Request,
     model:models.AddReserveModel,
+    db:db_dependency,
     current_user:Annotated[Users, Depends(get_current_user)]):
 
     check_user_member_type(current_user,"member")
@@ -41,16 +42,20 @@ def create_reserve_resource(
     return reserve
 
 
+
 @router.post("/unreserve")
 def unreserve_reserve_resource(
     request: Request,
     model:models.UnReserveModel,
+    db:db_dependency,
     current_user:Annotated[Users, Depends(get_current_user)]):
     
+    # breakpoint()
     check_user_member_type(current_user,"member")
-    reserve = check_valid_movie_entered(current_user,model.movie_name)
+    reserve,movie= check_valid_movie_entered(db,current_user,model.movie_name)
     check_valid_seats_entered_to_unreserve(reserve,model.no_of_seats)
-    reserve =  persist_unreserve_to_db(model,current_user)
-    return reserve
+    reserve_response =  persist_unreserve_to_db(db,movie,model.no_of_seats,reserve,current_user)
+    return reserve_response
+
 
 
