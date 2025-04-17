@@ -15,46 +15,46 @@ from src.api.entrypoint.movie.responses import *
 from src.core.log_config import logger
 from src.api.entrypoint.reserve.models import AddReserveModel
 from src.api.entrypoint.reserve.responses import ReserveResponse
-from src.core.extensions import db_dependency as db
 
 
 
-def reserve_movie(db,reserve:Reservations,current_user,movie,no_of_seats):
+
+def reserve_movie(db_session,reserve:Reservations,current_user,movie,no_of_seats):
     if reserve:
             update_reserve_seats =reserve.user_reserve_seats +no_of_seats
-            reserve_id =  update_reserve_seat_in_db(db,reserve.reserve_id,update_reserve_seats=update_reserve_seats)     
+            reserve_id =  update_reserve_seat_in_db(db_session,reserve.reserve_id,update_reserve_seats=update_reserve_seats)     
     else:
         new_reserve = Reservations(
             user_id=current_user.user_id,
             movie_id=movie.movie_id,
             user_reserve_seats=no_of_seats
         )
-        reserve_id= add_reserve_to_db(db,new_reserve)
+        reserve_id= add_reserve_to_db(db_session,new_reserve)
     return reserve_id
 
 
-def unreserve_movie(db,reserve:Reservations,no_of_seats):
+def unreserve_movie(db_session,reserve:Reservations,no_of_seats):
     if reserve:
             update_reserve_seats =reserve.user_reserve_seats -no_of_seats
-            reserve_id =  update_reserve_seat_in_db(db,reserve.reserve_id,update_reserve_seats=update_reserve_seats)
+            reserve_id =  update_reserve_seat_in_db(db_session,reserve.reserve_id,update_reserve_seats=update_reserve_seats)
     return reserve_id
 
 
-def persist_reserve_to_db(db,model,current_user):
-    movie = get_movie_by_movie_name(db,model.movie_name)
+def persist_reserve_to_db(db_session,model,current_user):
+    movie = get_movie_by_movie_name(db_session,model.movie_name)
     if not movie:
         raise MovieNotFoundException("Movie not found")
-    reserve = check_user_reserve_this_movie_before(db,current_user.user_id, movie.movie_id)
+    reserve = check_user_reserve_this_movie_before(db_session,current_user.user_id, movie.movie_id)
     before_reserve_seats = reserve.user_reserve_seats if reserve else 0
     try:
     
-        success = update_movie_after_reserve(db,movie, model.no_of_seats)
-        reserve_id= reserve_movie(db,reserve,current_user,movie,model.no_of_seats)
+        success = update_movie_after_reserve(db_session,movie, model.no_of_seats)
+        reserve_id= reserve_movie(db_session,reserve,current_user,movie,model.no_of_seats)
         if not success or not bool(reserve_id):
             raise FailedToSaveReserveException("Failed to reserve movie.")
 
         # commit only after both update_movie and reserve
-        db.commit()
+        db_session.commit()
         return ReserveResponse(reserve_id = reserve_id,
                                username= current_user.username,
                                movie_name=model.movie_name,
@@ -62,28 +62,28 @@ def persist_reserve_to_db(db,model,current_user):
                                user_reserve_seats=before_reserve_seats+model.no_of_seats
                                )
     except Exception as e:
-        db.rollback()
+        db_session.rollback()
         raise FailedToSaveReserveException(str(e))
     
 
-def persist_unreserve_to_db(db,movie,no_of_seats,reserve:Reservations,current_user):
+def persist_unreserve_to_db(db_session,movie,no_of_seats,reserve:Reservations,current_user):
     before_reserve_seats = reserve.user_reserve_seats
 
     try:
         delete_success = False
         user_reserve_seats = before_reserve_seats - no_of_seats
         if user_reserve_seats == 0:
-            db.delete(reserve)
+            db_session.delete(reserve)
             delete_success = True
         else:
-            reserve_id = unreserve_movie(db,reserve,no_of_seats)
+            reserve_id = unreserve_movie(db_session,reserve,no_of_seats)
 
-        success = update_movie_after_unreserve(db,movie,no_of_seats)
+        success = update_movie_after_unreserve(db_session,movie,no_of_seats)
 
         if not ((delete_success or bool(reserve_id)) and success): 
             raise FailedToSaveReserveException("Failed to Unreserve Movie")
 
-        db.commit()
+        db_session.commit()
         return ReserveResponse(reserve_id = reserve.reserve_id,
                                username= current_user.username,
                                movie_name=movie.movie_name,
@@ -93,18 +93,18 @@ def persist_unreserve_to_db(db,movie,no_of_seats,reserve:Reservations,current_us
 
 
     except Exception as e:
-        db.rollback()
+        db_session.rollback()
         raise FailedToUnReserveExpection("Failed to unreserve") from e
 
 
-def check_valid_movie_entered(db,current_user,movie_name):
+def check_valid_movie_entered(db_session,current_user,movie_name):
     # breakpoint()
     try:
-        movie = get_movie_by_movie_name(db,movie_name)
+        movie = get_movie_by_movie_name(db_session,movie_name)
 
         if not movie:
             raise ReserveNotFoundException(f"User with {current_user.username} has not reserved movie {movie_name}")
-        reserve = check_user_reserve_this_movie_before(db,current_user.user_id,movie.movie_id)
+        reserve = check_user_reserve_this_movie_before(db_session,current_user.user_id,movie.movie_id)
         if not reserve:
             raise ReserveNotFoundException(f"User with {current_user.username} has not reserved movie {movie_name}")
     except Exception as e:
@@ -118,33 +118,33 @@ def check_valid_seats_entered_to_unreserve(reserve, no_of_seats):
         raise InvalidSeatsEnteredException("Invalid Seats Entered")
     return True
 
-def list_out_all_reserves(db):
-    reserves = get_all_reserves_from_db(db)
+def list_out_all_reserves(db_session):
+    reserves = get_all_reserves_from_db(db_session)
     if not reserves:
         return []
     reserve_response = [{"reserve_id":reserve.reserve_id,
-                         "username":get_user_from_db_by_id(db,reserve.user_id).username,
-                         "movie_name":get_movie_from_db_by_id(db,reserve.movie_id).movie_name
+                         "username":get_user_from_db_by_id(db_session,reserve.user_id).username,
+                         "movie_name":get_movie_from_db_by_id(db_session,reserve.movie_id).movie_name
                         #  "user_reserve_seats":reserve.user_reserve_seats
                          }
                         for reserve in reserves]
     return reserve_response
 
 def list_reserves_by_user(current_user):
-    reserves = get_reserve_from_db_by_user_id(db,current_user.user_id)
+    reserves = get_reserve_from_db_by_user_id(db_session,current_user.user_id)
     if not reserves:
         return []
     reserves_response= [{"username":current_user.username,
-                         "movie_name":get_movie_by_movie_name(db,reserve.movie_id).movie_name,
+                         "movie_name":get_movie_by_movie_name(db_session,reserve.movie_id).movie_name,
                          "user_reserve_seats":reserve.user_reserve_seats
                          }
                         for reserve in reserves]
     return reserves_response
 
 
-def is_movie_available_to_reserve(db,movie_name,no_of_seats) -> bool:
+def is_movie_available_to_reserve(db_session,movie_name,no_of_seats) -> bool:
     # breakpoint()
-    movie = get_movie_available_by_movie_name(db,movie_name)
+    movie = get_movie_available_by_movie_name(db_session,movie_name)
     if not movie:
         raise MovieNotFoundException("No Such Movie Available")
     if no_of_seats > movie.available_seats or no_of_seats == 0 :

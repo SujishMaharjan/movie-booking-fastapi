@@ -46,7 +46,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             return JSONResponse(
                 status_code=500,
-                content={"detail": f"Internal Server Error, {type(e)}, {str(e)}"}
+                content={"detail": f"Internal Server Error, {str(e)}"}
             )
 
 
