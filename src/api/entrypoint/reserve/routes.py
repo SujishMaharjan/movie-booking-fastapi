@@ -31,7 +31,7 @@ async def get_reserve_resource(
 
 
 @router.post("/")
-def create_reserve_resource(
+async def create_reserve_resource(
     request: Request,
     model:models.AddReserveModel,
     db_session:Annotated[Session, Depends(get_db_session)],
@@ -45,7 +45,7 @@ def create_reserve_resource(
 
 
 @router.post("/unreserve")
-def unreserve_reserve_resource(
+async def unreserve_reserve_resource(
     request: Request,
     model:models.UnReserveModel,
     db_session:Annotated[Session, Depends(get_db_session)],

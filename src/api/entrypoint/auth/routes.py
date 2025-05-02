@@ -28,7 +28,7 @@ async def register_user(
 
 
 @router.post("/signin")
-def login_user(
+async def login_user(
     request: Request,
     db_session: Session = Depends(get_db_session),
     form_data: OAuth2PasswordRequestForm = Depends(),
