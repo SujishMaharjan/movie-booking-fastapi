@@ -1,17 +1,13 @@
-# from src.core.extensions import db_dependency as db
 from src.db_schemas.user import Users
 
-# db:db_dependency
-
-
-def get_user(db,username):
+def get_user(db_session,username):
     # breakpoint()
-    return db.query(Users).filter(Users.username == username).first()
+    return db_session.query(Users).filter(Users.username == username).first()
 
-def save_user_to_db(db,data):
+def save_user_to_db(db_session,data):
     # breakpoint()
-    db.add(data)
-    db.commit()
-    return get_user(db,data.username)
+    db_session.add(data)
+    db_session.commit()
+    return get_user(db_session,data.username)
 
 

@@ -9,8 +9,8 @@ from src.api.entrypoint.movie.models import MovieAddModel
 
 
 
-def get_all_movies(db):
-    movies = get_all_movies_from_db(db)
+def get_all_movies(db_session):
+    movies = get_all_movies_from_db(db_session)
     if not movies:
         return []
     # breakpoint()
@@ -20,8 +20,8 @@ def get_all_movies(db):
 
 
 
-def check_duplicate_movie(db,movie_name):
-    movie = get_movie_by_movie_name(db,movie_name)
+def check_duplicate_movie(db_session,movie_name):
+    movie = get_movie_by_movie_name(db_session,movie_name)
     if movie:
         logger.warning("Trying to create duplicate movie")
         raise DuplicateMovieException(
@@ -31,9 +31,9 @@ def check_duplicate_movie(db,movie_name):
         return None
     
 
-def persist_movie_to_db(db,model: MovieAddModel):
+def persist_movie_to_db(db_session,model: MovieAddModel):
     data = Movies(**model.model_dump())
-    movie = save_movie_to_db(db,data)
+    movie = save_movie_to_db(db_session,data)
     # breakpoint()
     if not movie:
          logger.error("Failed to save user in database")
@@ -43,30 +43,30 @@ def persist_movie_to_db(db,model: MovieAddModel):
     
     return MovieAddResponse(**movie.__dict__)
 
-def get_all_movies_available(db):
-    movies = get_all_movies_available_from_db(db)
+def get_all_movies_available(db_session):
+    movies = get_all_movies_available_from_db(db_session)
     if not movies:
         return []
     available_movies = [MovieResponseAvailable(**movie.__dict__) for movie in movies]
     return available_movies
 
-# def is_movie_available_to_reserve(db,movie_name,no_of_seats) -> bool:
+# def is_movie_available_to_reserve(db_session,movie_name,no_of_seats) -> bool:
 #     breakpoint()
-#     movie = get_movie_available_by_movie_name(db,movie_name)
+#     movie = get_movie_available_by_movie_name(db_session,movie_name)
 #     if not movie:
 #         raise MovieNotFoundException
 #     if movie.available_seats < no_of_seats:
 #         raise InvalidSeatsEnteredException
 #     return True
     
-def update_movie_after_reserve(db,movie:Movies,no_of_seats):
+def update_movie_after_reserve(db_session,movie:Movies,no_of_seats):
     update_reserve_seats = movie.reserve_seats +no_of_seats
     update_available_seats =movie.available_seats -no_of_seats
     if update_available_seats == 0:
         movie_status = "Fully Reserved"
     else:
         movie_status = movie.movie_status
-    return bool(update_movie_after_reserve_or_unreserve_in_db(db,movie.movie_id,update_reserve_seats,update_available_seats,movie_status))
+    return bool(update_movie_after_reserve_or_unreserve_in_db(db_session,movie.movie_id,update_reserve_seats,update_available_seats,movie_status))
     
 
 
@@ -74,33 +74,33 @@ def update_movie_after_reserve(db,movie:Movies,no_of_seats):
     # movie.available_seats -= no_of_seats
     # if movie.available_seats == 0:
     #     movie.movie_status = "Fully Reserved"
-    # db.commit()
-    # db.refresh(movie)
+    # db_session.commit()
+    # db_session.refresh(movie)
     # return True
 
-def update_movie_after_unreserve(db,movie:Movies,no_of_seats):
+def update_movie_after_unreserve(db_session,movie:Movies,no_of_seats):
     update_reserve_seats = movie.reserve_seats -no_of_seats
     update_available_seats =movie.available_seats +no_of_seats
     if update_available_seats != 0:
         movie_status = "Available"
     else:
         movie_status = movie.movie_status
-    return bool(update_movie_after_reserve_or_unreserve_in_db(db,movie.movie_id,update_reserve_seats,update_available_seats,movie_status))
+    return bool(update_movie_after_reserve_or_unreserve_in_db(db_session,movie.movie_id,update_reserve_seats,update_available_seats,movie_status))
     
 
 
-# def update_movie_after_unreserve(db,movie,no_of_seats):
+# def update_movie_after_unreserve(db_session,movie,no_of_seats):
 #     movie.reserve_seats -= no_of_seats
 #     movie.available_seats += no_of_seats
 #     if movie.available_seats != 0:
 #         movie.movie_status = "Available"
-#     db.commit()
-#     db.refresh(movie)
+#     db_session.commit()
+#     db_session.refresh(movie)
 #     return True
 
 
-def get_movie_by_id(db,movie_id):
-    movie = get_movie_from_db_by_id(db,movie_id)
+def get_movie_by_id(db_session,movie_id):
+    movie = get_movie_from_db_by_id(db_session,movie_id)
     if not movie:
         raise MovieNotFoundException("No such Id")
     return movie

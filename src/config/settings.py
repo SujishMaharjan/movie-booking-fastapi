@@ -1,6 +1,13 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import BaseModel,field_validator,SecretStr
-import json
+from pydantic import BaseModel,SecretStr,Field
+from fastapi import Request
+
+class DatabaseSettings(BaseModel):
+    user: str
+    password: str
+    host: str
+    port: int
+    name: str
 
 class DefaultSettings(BaseModel):
     secret: str
@@ -9,13 +16,16 @@ class DefaultSettings(BaseModel):
 
 
 class AppSettings(BaseSettings):
-    default: DefaultSettings
+    database: DatabaseSettings# = Field(validation_alias='database')
 
-    model_config = SettingsConfigDict(env_file=".env")
+    default: DefaultSettings# = Field(alias='default2') 
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding='utf-8'
+        )
 
-    @field_validator("default", mode="before")
-    @classmethod
-    def parse_default(cls, v):
-        if isinstance(v, str):
-            return json.loads(v)
-        return v
+   
+    
+def get_default_settings(request: Request):
+    return request.app.state.settings.default

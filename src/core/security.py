@@ -1,6 +1,5 @@
 import bcrypt,jwt
 from datetime import datetime, timezone, timedelta
-from src.core.config import SECRET_KEY, ALGORITHM,ACCESS_TOKEN_EXPIRE_MINUTES
 from src.modules.auth.exceptions import *
 from src.core.log_config import logger
 from src.config.settings import DefaultSettings
@@ -22,12 +21,12 @@ def verify_password(plain_password, password_from_db):
     return result
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict,default: DefaultSettings):
     # breakpoint()
     to_encode = data.copy()
     try:
         # expires_delta = timedelta(minutes = default.access_token_expire_minutes)
-        expires_delta = timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta = timedelta(minutes = default.access_token_expire_minutes)
     finally:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
@@ -35,5 +34,5 @@ def create_access_token(data: dict):
             expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     # encoded_jwt = jwt.encode(to_encode, default.secret, algorithm=default.algorithm)
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, default.secret, algorithm=default.algorithm)
     return encoded_jwt
