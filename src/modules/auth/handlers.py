@@ -14,9 +14,9 @@ from src.core.dependencies import oauth2_scheme
 from fastapi import Depends
 from typing import Annotated
 from src.modules.user.exceptions import UserNotFoundException
-from src.db_schemas.user import Users
-from src.config.settings import DefaultSettings,get_default_settings
-from src.core.extensions import get_db_session
+from src.core.infrastucture.persistence.user import Users
+from src.config.settings import JwtSettings,get_default_settings
+from src.core.infrastucture.persistence.database_postgres import get_db_session
 from sqlalchemy.orm import Session
 
 def check_duplicate_user(db_session, username):
@@ -46,7 +46,7 @@ def persist_user_to_db(db_session, model: UserRegisterModel):
     return UserRegisterResponse(**user_dict)
 
 
-def create_access_token(data: dict, default: DefaultSettings):
+def create_access_token(data: dict, default: JwtSettings):
     expires_delta: timedelta | None = default.access_token_expire_minutes
     to_encode = data.copy()
     if expires_delta:
@@ -60,7 +60,7 @@ def create_access_token(data: dict, default: DefaultSettings):
 
 def get_current_user(
     db_session: Annotated[Session, Depends(get_db_session)],
-    default: Annotated[DefaultSettings,Depends(get_default_settings)],
+    default: Annotated[JwtSettings,Depends(get_default_settings)],
     token: Annotated[str, Depends(oauth2_scheme)],
 ):
     try:

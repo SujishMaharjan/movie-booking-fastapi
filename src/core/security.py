@@ -2,7 +2,7 @@ import bcrypt,jwt
 from datetime import datetime, timezone, timedelta
 from src.modules.auth.exceptions import *
 from src.core.log_config import logger
-from src.config.settings import DefaultSettings
+from src.config.settings import JwtSettings
 
 
 def hash_password(password):
@@ -21,7 +21,7 @@ def verify_password(plain_password, password_from_db):
     return result
 
 
-def create_access_token(data: dict,default: DefaultSettings):
+def create_access_token(data: dict,default: JwtSettings):
     # breakpoint()
     to_encode = data.copy()
     try:

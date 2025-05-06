@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Request, Depends,Form
-from src.api.entrypoint.auth import models
-from src.modules.auth.handlers import (
-    check_duplicate_user,
-    persist_user_to_db,
-    get_user_from_db_by_username,
-)
-from src.core.extensions import get_db_session
-from src.core.security import hash_password, verify_password, create_access_token
+from src.core.infrastucture.persistence.database_postgres import get_db_session
 from fastapi.security import OAuth2PasswordRequestForm
-from src.modules.user.handlers import get_user
 from typing import Annotated
 from sqlalchemy.orm import Session
+from src.modules.auth.infrastructure import (
+    bycrypt_password_hasher,
+    Jwt_token_repository,
+    user_postgres_repository
+)
+from src.api.entrypoint.auth.models import UserRegisterModel
+from src.modules.auth.application.register_user import RegisterUser
+from src.modules.auth.application.login_user import LoginUser
+from src.api.entrypoint.auth.responses import UserRegisterResponse,TokenResponse
+from src.core.dependencies import AnnotatedJwtSettings
+
+
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -18,25 +22,25 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post("/signup")
 async def register_user(
     request: Request,
-    model: Annotated[models.UserRegisterModel,Form()],
+    model: Annotated[UserRegisterModel,Form()],
     db_session: Session = Depends(get_db_session),
 ):
-    check_duplicate_user(db_session, model.username)
-    model.password = str(hash_password(model.password.get_secret_value()))
-    user = persist_user_to_db(db_session, model)
-    return user
+    user_repo = user_postgres_repository.PostgresUserRepository(db_session)
+    hash_repo = bycrypt_password_hasher.BcryptPasswordHasher()
+    new_user = RegisterUser(user_repo,hash_repo).execute(model.name, model.username, model.password.get_secret_value(), model.phone, model.email, model.role)
+    return UserRegisterResponse(**new_user)
 
 
 @router.post("/signin")
 async def login_user(
     request: Request,
+    jwt_settings: AnnotatedJwtSettings,
     db_session: Session = Depends(get_db_session),
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    form_data: OAuth2PasswordRequestForm = Depends(),  
 ):
+    user_repo = user_postgres_repository.PostgresUserRepository(db_session)
+    hash_repo = bycrypt_password_hasher.BcryptPasswordHasher()
+    token_repo = Jwt_token_repository.JwtToken(jwt_settings)
 
-    user = get_user(db_session, form_data.username)
-    verify_password(form_data.password, user.password)
-    access_token = create_access_token(
-        {"sub": user.username}, request.app.state.settings.default
-    )
-    return models.Token(access_token=access_token, token_type="bearer")
+    access_token = LoginUser(user_repo,hash_repo,token_repo).execute(form_data.username,form_data.password)
+    return TokenResponse(access_token=access_token, token_type="bearer")

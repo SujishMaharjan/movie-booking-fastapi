@@ -5,17 +5,11 @@ from datetime import date
 
 class UserRegisterModel(BaseModel):
     name: str
-    date_of_birth: date
+    phone: str
     email: str
     username: str
     password: SecretStr
-    permission: MemberType
-
-
-class UserLoginModel(BaseModel):
-    username: str
-    password: str
-
+    role: MemberType
 
 class Token(BaseModel):
     access_token: str

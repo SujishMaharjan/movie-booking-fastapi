@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends
 from typing import Annotated
-from src.db_schemas.user import Users
-from src.core.extensions import get_db_session
+from src.core.infrastucture.persistence.user import Users
+from src.core.infrastucture.persistence.database_postgres import get_db_session
 from src.api.entrypoint.user import models
 from src.modules.auth.handlers import get_current_user
 from src.modules.user.handlers import check_user_member_type

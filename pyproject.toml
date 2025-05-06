@@ -34,4 +34,4 @@ allow-direct-references = true
 packages = ["src/movie_booking_fastapi"]
 
 [tool.rye.scripts]
-start = "fastapi dev src/main.py"
+main = "fastapi dev src/main.py"

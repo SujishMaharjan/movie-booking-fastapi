@@ -1,4 +1,4 @@
-from src.db_schemas.user import Users
+from src.core.infrastucture.persistence.user import Users
 from src.modules.user.exceptions import InvalidMemberTypeException,UserNotFoundException
 from src.modules.auth.exceptions import InvalidUserNameException, InvalidPasswordException
 from src.modules.user.queries import *

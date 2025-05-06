@@ -9,7 +9,9 @@ class DatabaseSettings(BaseModel):
     port: int
     name: str
 
-class DefaultSettings(BaseModel):
+class TokenSettings(BaseModel):...
+
+class JwtSettings(TokenSettings):
     secret: str
     algorithm: str
     access_token_expire_minutes: int
@@ -18,7 +20,7 @@ class DefaultSettings(BaseModel):
 class AppSettings(BaseSettings):
     database: DatabaseSettings# = Field(validation_alias='database')
 
-    default: DefaultSettings# = Field(alias='default2') 
+    jwt: JwtSettings# = Field(alias='default2') 
     
     model_config = SettingsConfigDict(
         env_file=".env",

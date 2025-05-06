@@ -1,4 +1,4 @@
-from src.db_schemas.user import Users
+from src.core.infrastucture.persistence.user import Users
 
 def get_user(db_session,username):
     # breakpoint()

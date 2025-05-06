@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, Depends,Form
 from src.api.entrypoint.movie import models, responses
-from src.db_schemas.user import Users
+from src.core.infrastucture.persistence.user import Users
 from src.modules.movie.handlers import (
     get_all_movies,
     check_duplicate_movie,
@@ -9,7 +9,7 @@ from src.modules.movie.handlers import (
     get_movie_by_id,
 )
 from src.modules.user.handlers import check_user_member_type
-from src.core.extensions import get_db_session
+from src.core.infrastucture.persistence.database_postgres import get_db_session
 from sqlalchemy.orm import Session
 from typing import Annotated
 from src.modules.auth.handlers import get_current_user

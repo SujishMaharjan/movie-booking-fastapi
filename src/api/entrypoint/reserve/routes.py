@@ -5,8 +5,8 @@ from src.modules.auth.handlers import get_current_user
 from src.modules.user.handlers import check_user_member_type
 from src.modules.reserve.handlers import *
 from src.modules.movie.handlers import get_movie_available_by_movie_name
-from src.db_schemas.user import Users
-from src.core.extensions import get_db_session
+from src.core.infrastucture.persistence.user import Users
+from src.core.infrastucture.persistence.database_postgres import get_db_session
 from sqlalchemy.orm import Session
 
 
