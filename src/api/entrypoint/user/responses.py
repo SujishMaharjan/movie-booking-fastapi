@@ -1,17 +1,17 @@
 from pydantic import BaseModel
 from src.api.entrypoint.user.models import MemberType
 from datetime import date
+from src.modules.user.entity.user import UserRole
 
 class AllUserResponse(BaseModel):
-    user_id: int
+    id: str
     username: str
     name: str
-    permission: MemberType
+    role: UserRole
 
 class UserIdResponse(BaseModel):
-    user_id : int
+    id : str
     name: str
-    date_of_birth : date
     email : str
     username : str
-    permission : MemberType
+    role : UserRole

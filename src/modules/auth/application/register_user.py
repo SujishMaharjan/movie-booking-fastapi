@@ -1,9 +1,10 @@
 import uuid
-from src.modules.auth.interfaces.user_repository import UserRepository
+from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
 from src.modules.user.entity.user import User
 from datetime import datetime
-
+from src.modules.user.infrastructure.persistence.models import Users
+from src.modules.auth.exceptions import DuplicateUserException
 
 class RegisterUser:
     def __init__(
@@ -19,23 +20,25 @@ class RegisterUser:
             id=str(uuid.uuid4()),
             name=name,
             phone=phone,
+            email=email,
             username=username,
             hashed_password=hash_password,
             created_at=datetime.now(),
             role=role,
         )
-        self.user_repository.save(user)
+        user_data = Users(**user.__dict__)
+        self.user_repository.save(user_data)
         return user
 
     def check_duplicate_user(self, username: str, email: str, phone: str) -> bool:
 
         if self.user_repository.get_by_username(username):
-            raise ValueError("Username already Exist")
+            raise DuplicateUserException("Username already Exist")
 
         if self.user_repository.get_by_email(email):
-            raise ValueError("Email already Exist")
+            raise DuplicateUserException("Email already Exist")
 
         if self.user_repository.get_by_phone(phone):
-            raise ValueError("Phone already Exist")
+            raise DuplicateUserException("Phone already Exist")
 
         return True

@@ -1,4 +1,4 @@
-from src.db_schemas.movie import Movies
+from src.modules.movie.infrastructure.persistence.models import Movies
 from src.modules.reserve.exceptions import *
 from src.modules.movie.exceptions import (FailedToUpdateMovieException,
                                           MovieNotFoundException,

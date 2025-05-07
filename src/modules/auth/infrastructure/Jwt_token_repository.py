@@ -19,14 +19,15 @@ class JwtToken(TokenRepository):
         encoded_jwt = jwt.encode(to_encode, self.jwt_settings.secret, algorithm=self.jwt_settings.algorithm)
         return encoded_jwt
     
-    def validate_and_decode_token(self,token:str,jwt_settings:JwtSettings)->dict:
+    def validate_and_decode_token(self,token:str)->dict:
         try:
             payload = jwt.decode(token, self.jwt_settings.secret, algorithms=[self.jwt_settings.algorithm])
         except jwt.ExpiredSignatureError:
             raise InvalidTokenException("Token Expired")
         except jwt.PyJWTError:
             raise InvalidTokenException("Invalid Token")
-        return payload
+        return payload.get("sub")
 
+    
         
         

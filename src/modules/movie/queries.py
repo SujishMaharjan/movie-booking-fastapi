@@ -1,4 +1,4 @@
-from src.db_schemas.movie import Movies
+from src.modules.movie.infrastructure.persistence.models import Movies
 
 
 

@@ -8,11 +8,14 @@ class BcryptPasswordHasher(PasswordHasher):
         bytes = password.encode("utf-8")
         salt = bcrypt.gensalt()
         hashed = bcrypt.hashpw(bytes,salt)
-        return hashed
+        hashed_str = hashed.decode('utf-8')
+        return hashed_str
     
-    def verify_password(self,password, hashed_password):
+    def verify_password(self,password,hashed):
         plain_password_bytes = password.encode('utf-8')
-        if result:= bcrypt.checkpw(plain_password_bytes,eval(hashed_password)):
+        hashed = hashed.encode('utf-8')
+        result= bcrypt.checkpw(plain_password_bytes,hashed)
+        if not result:
             #  logger.warning()
                 raise LoginException("Invalid Username Or Password")
         return result

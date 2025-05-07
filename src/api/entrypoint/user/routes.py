@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Request, Depends
 from typing import Annotated
-from src.core.infrastucture.persistence.user import Users
 from src.core.infrastucture.persistence.database_postgres import get_db_session
-from src.api.entrypoint.user import models
-from src.modules.auth.handlers import get_current_user
-from src.modules.user.handlers import check_user_member_type
-from src.modules.user.handlers import get_users, get_user_by_id
 from sqlalchemy.orm import Session
+from src.core.dependencies import oauth2_scheme,AnnotatedJwtSettings
+from src.modules.auth.infrastructure import (
+    Jwt_token_repository
+)
+from src.modules.user.application import list_users,get_user,get_user_own
+from src.modules.user.infrastructure import user_postgres_repository
+from src.api.entrypoint.user.responses import AllUserResponse,UserIdResponse
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -16,26 +18,37 @@ router = APIRouter(prefix="/users", tags=["Users"])
 # later add param for page_number and page_size
 async def list_user_resource(
     request: Request,
-    current_user: Annotated[Users, Depends(get_current_user)],
+    jwt_settings: AnnotatedJwtSettings,
+    token: Annotated[str,Depends(oauth2_scheme)],
     db_session: Session = Depends(get_db_session),
 ):
-    check_user_member_type(current_user, "admin")
-    users = get_users(db_session)
-    return users
-
+    user_repo = user_postgres_repository.PostgresUserRepository(db_session)
+    token_repo = Jwt_token_repository.JwtToken(jwt_settings)
+    users = list_users.ListUser(token,user_repo,token_repo).execute()
+    return [AllUserResponse(**user.__dict__) for user in users]
+    
 
 @router.get("/{user_id}")
-# later add param for page_number and page_size
 async def get_user_resource(
     request: Request,
-    user_id: int,
-    current_user: Annotated[Users, Depends(get_current_user)],
+    user_id: str,
+    jwt_settings: AnnotatedJwtSettings,
+    token: Annotated[str,Depends(oauth2_scheme)],
     db_session: Session = Depends(get_db_session),
 ):
-    check_user_member_type(current_user, "admin")
-    users = get_user_by_id(db_session, user_id)
-    return users
+    user_repo = user_postgres_repository.PostgresUserRepository(db_session)
+    token_repo = Jwt_token_repository.JwtToken(jwt_settings)
+    user = get_user.GetUser(token,user_repo,token_repo).execute(user_id)
+    return UserIdResponse(**user.__dict__)
 
-
-# @router.patch("/{user_id}")
-# async def update_user_details(request: Request,username:str): ...
+@router.get("/me")
+async def get_user_resource(
+    request: Request,
+    jwt_settings: AnnotatedJwtSettings,
+    token: Annotated[str,Depends(oauth2_scheme)],
+    db_session: Session = Depends(get_db_session),
+):
+    user_repo = user_postgres_repository.PostgresUserRepository(db_session)
+    token_repo = Jwt_token_repository.JwtToken(jwt_settings)
+    user = get_user_own.GetUserOwn(token,user_repo,token_repo).execute()
+    return UserIdResponse(**user.__dict__)

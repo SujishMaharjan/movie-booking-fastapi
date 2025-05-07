@@ -5,14 +5,14 @@ from typing import Annotated
 from sqlalchemy.orm import Session
 from src.modules.auth.infrastructure import (
     bycrypt_password_hasher,
-    Jwt_token_repository,
-    user_postgres_repository
+    Jwt_token_repository
 )
 from src.api.entrypoint.auth.models import UserRegisterModel
 from src.modules.auth.application.register_user import RegisterUser
 from src.modules.auth.application.login_user import LoginUser
 from src.api.entrypoint.auth.responses import UserRegisterResponse,TokenResponse
 from src.core.dependencies import AnnotatedJwtSettings
+from src.modules.user.infrastructure import user_postgres_repository
 
 
 
@@ -28,7 +28,7 @@ async def register_user(
     user_repo = user_postgres_repository.PostgresUserRepository(db_session)
     hash_repo = bycrypt_password_hasher.BcryptPasswordHasher()
     new_user = RegisterUser(user_repo,hash_repo).execute(model.name, model.username, model.password.get_secret_value(), model.phone, model.email, model.role)
-    return UserRegisterResponse(**new_user)
+    return UserRegisterResponse(**new_user.__dict__)
 
 
 @router.post("/signin")

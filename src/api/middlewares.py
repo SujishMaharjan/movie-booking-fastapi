@@ -55,8 +55,6 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
             )
 
 
-# class FailedToSaveException(Exception): ...
-
-# class NotFoundException(Exception): ...
-
-# class InvalidInputEnteredException(Exception): ...
+# class TokenValidationMiddleware(BaseHTTPMiddleware):
+#     async def dispatch(self, request: Request, call_next):
+#         response = call_next(request)

@@ -1,4 +1,4 @@
-from src.db_schemas.movie import Movies
+from src.modules.movie.infrastructure.persistence.models import Movies
 from src.modules.movie.exceptions import *
 from src.modules.movie.queries import *
 from src.api.entrypoint.movie.responses import *
