@@ -6,7 +6,7 @@ from src.modules.auth.exceptions import InvalidTokenException
 
 
 
-class JwtToken(TokenRepository):
+class JwtService(TokenRepository):
 
     def __init__(self,jwt_settings: JwtSettings):
         self.jwt_settings = jwt_settings

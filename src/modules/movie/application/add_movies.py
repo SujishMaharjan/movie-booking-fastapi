@@ -8,7 +8,7 @@ from src.modules.movie.exceptions import DuplicateMovieException
 from src.modules.movie.entity.movie import Movie
 from datetime import datetime
 from src.config.settings import HallSettings
-from src.api.entrypoint.movie.models import MovieAddModel
+from src.entrypoints.api.movie.models import MovieAddModel
 from src.modules.movie.entity.movie import Movie
 from src.modules.user.exceptions import InvalidMemberTypeException
 
@@ -45,8 +45,8 @@ class CreateMovie:
             created_at=datetime.now()
         )
 
-        movie_data = self.user_repo.to_persistence_model(movie)
-        self.user_repository.save(movie_data)
+        movie_data = self.movie_repo.to_persistence_model(movie)
+        self.movie_repo.save(movie_data)
         return movie
         
 

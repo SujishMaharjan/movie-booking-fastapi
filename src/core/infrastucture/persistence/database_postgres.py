@@ -6,6 +6,7 @@ from src.config.settings import DatabaseSettings
 from src.core.infrastucture.persistence.base import Base
 from src.modules.user.infrastructure.persistence.models import Users
 from src.modules.movie.infrastructure.persistence.models import Movies
+from src.modules.reserve.infrastructure.persistence.models import Reservations
 
 def create_db_engine(database: DatabaseSettings):
     engine = create_engine(

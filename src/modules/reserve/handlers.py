@@ -4,17 +4,13 @@ from src.modules.movie.exceptions import (FailedToUpdateMovieException,
                                           MovieNotFoundException,
                                           InvalidSeatsEnteredException)
 from src.modules.reserve.handlers import *
-from src.modules.user.queries import get_user_from_db_by_id
+
 from src.modules.reserve.queries import *
-from src.modules.movie.queries import get_movie_by_movie_name,get_movie_available_by_movie_name,get_movie_from_db_by_id
-from src.modules.movie.handlers import (
-    update_movie_after_reserve,
-    update_movie_after_unreserve,
-)
-from src.api.entrypoint.movie.responses import *
+
+from src.entrypoints.api.movie.responses import *
 from src.core.log_config import logger
-from src.api.entrypoint.reserve.models import AddReserveModel
-from src.api.entrypoint.reserve.responses import ReserveResponse
+from src.entrypoints.api.reserve.models import AddReserveModel
+from src.entrypoints.api.reserve.responses import ReserveResponse
 
 
 

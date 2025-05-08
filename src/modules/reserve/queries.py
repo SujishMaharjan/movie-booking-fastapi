@@ -1,4 +1,4 @@
-from src.db_schemas.reserve import Reservations
+from src.modules.reserve.infrastructure.persistence.models import Reservations
 
 
 
