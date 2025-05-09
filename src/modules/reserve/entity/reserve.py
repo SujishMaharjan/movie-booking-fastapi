@@ -9,4 +9,4 @@ class Reserve:
     movie_id: uuid
     user_reserve_seats: int
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetime | None = None

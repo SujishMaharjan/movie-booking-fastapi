@@ -10,7 +10,7 @@ class Reservations(Base):
     movie_id = Column(String, ForeignKey("movies.id"),index=True)
     user_reserve_seats = Column(Integer)
     created_at =Column(DateTime, default=datetime.now(timezone.utc))
-    updated_at =Column(DateTime,nullable=True, default=datetime.now(timezone.utc)) 
+    updated_at =Column(DateTime,nullable=True) 
 
 
    

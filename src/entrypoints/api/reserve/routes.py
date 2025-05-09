@@ -46,12 +46,12 @@ async def create_reserve_resource(
     try:
         reserve = MovieReserveService(token,user_repo,token_repo,movie_repo,reserve_repo).execute(model)
         db_session.commit()
-    except FailedToSaveException as e:
+    except Exception as e:
         db_session.rollback()
         #logger.debug("Failed to reserve movies")
         raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
 
-    return AddReserveModel(**reserve)
+    return ReserveResponse(**reserve)
 
 
 

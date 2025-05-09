@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 class ReserveResponse(BaseModel):
-    reserve_id: int
+    id: str
     username: str
     movie_name: str
     before_reserve_seats: int | None = None
@@ -9,7 +9,7 @@ class ReserveResponse(BaseModel):
     
 
 class ReserveUserResponse(BaseModel):
-    reserve_id: int
+    id: str
     movie_name : str
     user_reserve_seats: str
 

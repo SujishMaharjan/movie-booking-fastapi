@@ -6,7 +6,7 @@ from src.core.dependencies import oauth2_scheme,AnnotatedJwtSettings
 from src.modules.auth.infrastructure import (
     Jwt_token_repository
 )
-from src.modules.user.application import list_users,get_user,get_user_own
+from src.modules.user.application import get_user_self, list_users,get_user
 from src.modules.user.infrastructure import user_postgres_repository
 from src.entrypoints.api.user.responses import AllUserResponse,UserIdResponse
 
@@ -50,5 +50,5 @@ async def get_user_resource(
 ):
     user_repo = user_postgres_repository.PostgresUserRepository(db_session)
     token_repo = Jwt_token_repository.JwtService(jwt_settings)
-    user = get_user_own.GetUserOwn(token,user_repo,token_repo).execute()
+    user = get_user_self.GetUserOwn(token,user_repo,token_repo).execute()
     return UserIdResponse(**user.__dict__)
