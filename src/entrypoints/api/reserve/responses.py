@@ -10,8 +10,11 @@ class ReserveResponse(BaseModel):
 
 class ReserveUserResponse(BaseModel):
     id: str
-    movie_name : str
-    user_reserve_seats: str
+    user_id : str
+    movie_id: str
+    user_reserve_seats: int
+
+class UnReserveResponse(ReserveResponse):...
 
 class ListAllReserveResponse(BaseModel):
     pass

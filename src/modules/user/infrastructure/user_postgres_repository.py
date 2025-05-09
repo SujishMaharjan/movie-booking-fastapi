@@ -17,7 +17,7 @@ class PostgresUserRepository(UserRepository):
     
     
     def get_by_username(self, username):
-        return self.session.query(Users).filter(Users.username==username).first()
+        return  self.session.query(Users).filter(Users.username==username).first()
 
     
     def get_by_email(self, email):

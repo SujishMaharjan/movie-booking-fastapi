@@ -25,7 +25,7 @@ class PostgresMovieRepository(MovieRepository):
         return self.session.query(Movies).filter(Movies.movie_status == StatusType.AVAILABLE).all()
 
     def update_movie_seats_and_status(self,movie_id,reserve_seats,available_seats,movie_status):
-        self.session.query(Movies).filter(Movies.id == movie_id).update(
+        result=self.session.query(Movies).filter(Movies.id == movie_id).update(
             {Movies.reserve_seats : reserve_seats,
             Movies.available_seats : available_seats,
             Movies.movie_status : movie_status,

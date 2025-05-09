@@ -30,7 +30,7 @@ class MovieReserveService:
         user:User = self.user_repo.to_dataclass(user,User)
         self.is_member(user.role)
         movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
-        updated_movie=self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
+        self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
         updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
         return {
             "username":user.username,
@@ -83,7 +83,7 @@ class MovieReserveService:
         except Exception:
             raise FailedToSaveException("Failed to update movie seats and status")
         
-        return movie
+        return True
     
 
     def create_or_update_reserve(self,user_id:str,movie_id:str,no_of_seats:int):

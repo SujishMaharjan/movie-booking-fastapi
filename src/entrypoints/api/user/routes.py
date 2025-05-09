@@ -42,7 +42,7 @@ async def get_user_resource(
     return UserIdResponse(**user.__dict__)
 
 @router.get("/me")
-async def get_user_resource(
+async def get_self_user_resource(
     request: Request,
     jwt_settings: AnnotatedJwtSettings,
     token: Annotated[str,Depends(oauth2_scheme)],

@@ -13,9 +13,15 @@ class PostgresReserveRepository(ReserveRepository):
     def save(self,reserve:Reservations)->Reservations:
         self.session.add(reserve)
 
-    def get_by_id(self, reserve_id: str)-> Union[Reservations,None]: ...
+    def get_by_id(self, reserve_id: str)-> Union[Reservations,None]:
+        raw_reserve =self.session.query(Reservations).filter(Reservations.id == reserve_id).first()
+        reserve = self.to_dataclass(raw_reserve,Reserve) if raw_reserve else None
+        return reserve
 
-    def get_by_user_id(self, reserve_id: str)-> Union[Reservations,None]: ...
+    def get_by_user_id(self, user_id: str)-> Union[Reservations,None]:
+        raw_reserve =self.session.query(Reservations).filter(Reservations.user_id == user_id).first()
+        reserve = self.to_dataclass(raw_reserve,Reserve) if raw_reserve else None
+        return reserve
 
     def get_by_movie_id(self, reserve_id: str)-> Union[Reservations,None]: ...
 
@@ -45,3 +51,6 @@ class PostgresReserveRepository(ReserveRepository):
 
     def to_persistence_model(self,reserve:Reserve)->Reservations:
         return Reservations(**reserve.__dict__)
+    
+    def delete_by_id(self,reserve_id:int):
+        return self.session.query(Reservations).filter(Reservations.id == reserve_id).delete()

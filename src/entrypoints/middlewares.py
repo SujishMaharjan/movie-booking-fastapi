@@ -18,7 +18,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 status_code=409,
                 content={"detail": str(e)}
             )
-        except FailedToSaveException as e:
+        except FailedToPersistException as e:
             return JSONResponse(
                 status_code=500,
                 content={"detail": str(e)}
