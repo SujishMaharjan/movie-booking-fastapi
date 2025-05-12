@@ -9,7 +9,6 @@ class UserRegisterModel(BaseModel):
     email: str
     username: str
     password: SecretStr
-    role: MemberType
 
 class Token(BaseModel):
     access_token: str

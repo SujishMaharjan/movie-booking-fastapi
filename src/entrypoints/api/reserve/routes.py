@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request,Depends
 from src.entrypoints.api.reserve import models
 from typing import Annotated
-from src.modules.reserve.handlers import *
 from src.core.infrastucture.persistence.database_postgres import get_db_session
 from sqlalchemy.orm import Session
 from src.core.dependencies import oauth2_scheme,AnnotatedJwtSettings,AnnotatedHallSettings

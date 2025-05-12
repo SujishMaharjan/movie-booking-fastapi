@@ -2,15 +2,21 @@ from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.user.entity.user import User
 from src.modules.user.infrastructure.persistence.models import Users
 from sqlalchemy.orm import Session
-
+from src.core.exceptions import FailedToPersistException
 
 class PostgresUserRepository(UserRepository):
     def __init__(self,session: Session):
         self.session = session
 
     def save(self, user):
-        self.session.add(user)
-        self.session.commit()
+        try:
+            self.session.add(user)
+            self.session.commit()
+            return True
+        except Exception as e:
+            self.session.rollback()
+            raise FailedToPersistException(f"An Unexpected Error Occured while saving user {str(e)}")
+        
 
     def get_by_id(self, user_id):
         return self.session.query(Users).filter(Users.id==user_id).first()

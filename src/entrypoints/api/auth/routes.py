@@ -27,7 +27,7 @@ async def register_user(
 ):
     user_repo = user_postgres_repository.PostgresUserRepository(db_session)
     hash_repo = bycrypt_password_hasher.BcryptPasswordHasher()
-    new_user = RegisterUser(user_repo,hash_repo).execute(model.name, model.username, model.password.get_secret_value(), model.phone, model.email, model.role)
+    new_user = RegisterUser(user_repo,hash_repo).execute(model.name, model.username, model.password.get_secret_value(), model.phone, model.email,)
     return UserRegisterResponse(**new_user.__dict__)
 
 

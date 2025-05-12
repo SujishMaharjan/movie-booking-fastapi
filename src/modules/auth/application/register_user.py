@@ -1,7 +1,7 @@
 import uuid
 from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
-from src.modules.user.entity.user import User
+from src.modules.user.entity.user import User, UserRole
 from datetime import datetime
 from src.modules.user.infrastructure.persistence.models import Users
 from src.modules.auth.exceptions import DuplicateUserException
@@ -13,7 +13,7 @@ class RegisterUser:
         self.user_repository = user_repository
         self.hasher_repository = hasher_repository
 
-    def execute(self, name, username, password, phone, email, role):
+    def execute(self, name, username, password, phone, email):
         self.check_duplicate_user(username, email, phone)
         hash_password = self.hasher_repository.hash_password(password)
         user = User(
@@ -24,7 +24,7 @@ class RegisterUser:
             username=username,
             hashed_password=hash_password,
             created_at=datetime.now(),
-            role=role,
+            role=UserRole.MEMBER,
         )
         user_data = Users(**user.__dict__)
         self.user_repository.save(user_data)

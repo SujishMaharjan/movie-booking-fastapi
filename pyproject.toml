@@ -15,6 +15,7 @@ dependencies = [
     "pylint>=3.3.6",
     "black>=25.1.0",
     "pydantic-settings>=2.8.1",
+    "click>=8.2.0",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
@@ -35,3 +36,4 @@ packages = ["src/movie_booking_fastapi"]
 
 [tool.rye.scripts]
 main = "fastapi dev src/main.py"
+cli="python -m src.cmd.cli.main"
