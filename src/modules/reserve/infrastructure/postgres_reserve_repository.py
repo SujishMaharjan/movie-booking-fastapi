@@ -25,7 +25,8 @@ class PostgresReserveRepository(ReserveRepository):
 
     def get_by_movie_id(self, reserve_id: str)-> Union[Reservations,None]: ...
 
-    def get_all(self)-> Union[List[Reservations],None]: ...
+    def get_all(self)-> Union[List[Reservations],None]:
+        return self.session.query(Reservations).all()
 
     def get_by_user_id_and_movie_id(self,user_id:str,movie_id:str):
         raw_reserve =self.session.query(Reservations).filter((Reservations.user_id == user_id) & (Reservations.movie_id == movie_id)).first()

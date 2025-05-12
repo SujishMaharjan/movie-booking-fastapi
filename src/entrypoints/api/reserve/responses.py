@@ -16,8 +16,7 @@ class ReserveUserResponse(BaseModel):
 
 class UnReserveResponse(ReserveResponse):...
 
-class ListAllReserveResponse(BaseModel):
-    pass
+class AllReserveResponse(ReserveUserResponse): ...
 
 
 

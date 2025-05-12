@@ -12,7 +12,8 @@ from src.modules.reserve.infrastructure.postgres_reserve_repository import Postg
 from src.modules.reserve.application.reserve_movie import MovieReserveService
 from src.modules.reserve.application.get_self_reserve_details import GetUserReserveOwn
 from src.modules.reserve.application.unreserve_movies import MovieUnreserveService
-from src.entrypoints.api.reserve.responses import ReserveResponse, ReserveUserResponse
+from src.modules.reserve.application.get_all_reserves import ListAllReservesService
+from src.entrypoints.api.reserve.responses import ReserveResponse, ReserveUserResponse,AllReserveResponse
 
 
 router = APIRouter(
@@ -20,16 +21,18 @@ router = APIRouter(
     tags=["Reserves"]
 )
 
-# @router.get("/")
-# async def get_reserve_resource(
-#     request: Request,
-#     db_session:Annotated[Session, Depends(get_db_session)],
-#     current_user:Annotated[Users, Depends(get_current_user)]):
-
-#     logger.info("Reserve endpoint accessed")
-#     check_user_member_type(current_user,"admin")
-#     reserves = list_out_all_reserves(db_session)
-#     return reserves
+@router.get("/")
+async def get_reserve_resource(
+request: Request,
+    jwt_settings: AnnotatedJwtSettings,
+    token: Annotated[str,Depends(oauth2_scheme)],
+    db_session: Session = Depends(get_db_session),
+):
+    user_repo = PostgresUserRepository(db_session)
+    token_repo = JwtService(jwt_settings)
+    reserve_repo = PostgresReserveRepository(db_session)
+    reserves = ListAllReservesService(token,user_repo,token_repo,reserve_repo).execute()
+    return [AllReserveResponse(**reserve.__dict__) for reserve in reserves]
 
 @router.get("/me")
 async def get_self_reserve_resource(
