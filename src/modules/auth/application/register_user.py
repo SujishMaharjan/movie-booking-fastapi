@@ -1,17 +1,21 @@
 import uuid
 from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
+from src.modules.auth.interfaces.token_repository import TokenRepository
 from src.modules.user.entity.user import User, UserRole
 from datetime import datetime
 from src.modules.user.infrastructure.persistence.models import Users
 from src.modules.auth.exceptions import DuplicateUserException
+from src.core.provider import Provider
+from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
 
 class RegisterUser:
     def __init__(
-        self, user_repository: UserRepository, hasher_repository: PasswordHasher
+        self, provider: Provider
     ):
-        self.user_repository = user_repository
-        self.hasher_repository = hasher_repository
+        self.user_repository:UserRepository = provider.user_repository
+        self.hasher_repository:PasswordHasher = provider.hasher_repository
+        
 
     def execute(self, name, username, password, phone, email):
         self.check_duplicate_user(username, email, phone)
@@ -28,7 +32,7 @@ class RegisterUser:
         )
 
         # instead of __dict__ use something function
-        user_data = Users(**user.to_dict())
+        user_data = Users(**vars(user))
         self.user_repository.save(user_data)
         return user
 

@@ -1,4 +1,4 @@
-from src.core.infrastucture.persistence.base import Base
+from src.core.database import Base
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, ForeignKey, DateTime,Enum
 from datetime import datetime, timezone
 from src.modules.movie.entity.movie import StatusType

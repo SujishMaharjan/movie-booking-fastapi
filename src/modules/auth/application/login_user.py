@@ -3,14 +3,16 @@ from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
 from src.modules.auth.interfaces.token_repository import TokenRepository
 from src.modules.auth.exceptions import LoginException
+from src.core.provider import Provider
 
 
 
 class LoginUser:
-    def __init__(self,user_repository: UserRepository,hasher_repository:PasswordHasher,token_repository:TokenRepository):
-        self.user_repository = user_repository
-        self.hasher_repository = hasher_repository
-        self.token_repository = token_repository
+    def __init__(self,provider:Provider):
+        self.user_repository:UserRepository = provider.user_repository
+        self.hasher_repository:PasswordHasher = provider.hasher_repository
+        self.token_repository:TokenRepository = provider.token_repository
+        
 
     def execute(self,identifier,password):
         # Logic to handle login using identifier (username, email, or phone) and password

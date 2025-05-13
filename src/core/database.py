@@ -3,10 +3,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 from fastapi import Depends,Request
 from src.config.settings import DatabaseSettings
-from src.core.infrastucture.persistence.base import Base
-from src.modules.user.infrastructure.persistence.models import Users
-from src.modules.movie.infrastructure.persistence.models import Movies
-from src.modules.reserve.infrastructure.persistence.models import Reservations
+
+
+Base = declarative_base()
 
 def create_db_engine(database: DatabaseSettings):
     engine = create_engine(
