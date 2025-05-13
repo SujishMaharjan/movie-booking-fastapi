@@ -26,7 +26,9 @@ class RegisterUser:
             created_at=datetime.now(),
             role=UserRole.MEMBER,
         )
-        user_data = Users(**user.__dict__)
+
+        # instead of __dict__ use something function
+        user_data = Users(**user.to_dict())
         self.user_repository.save(user_data)
         return user
 

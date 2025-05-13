@@ -35,6 +35,7 @@ async def get_user_resource(
     jwt_settings: AnnotatedJwtSettings,
     token: Annotated[str,Depends(oauth2_scheme)],
     db_session: Session = Depends(get_db_session),
+    # user: Annotated[]
 ):
     user_repo = user_postgres_repository.PostgresUserRepository(db_session)
     token_repo = Jwt_token_repository.JwtService(jwt_settings)

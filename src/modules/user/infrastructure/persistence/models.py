@@ -13,6 +13,7 @@ class Users(Base):
     hashed_password = Column(String)
     created_at =Column(DateTime, default=datetime.now(timezone.utc))
     role = Column(String)
+
     
     
     
