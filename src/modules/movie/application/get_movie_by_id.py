@@ -6,6 +6,7 @@ from src.modules.movie.exceptions import InvalidInputEnteredException
 from src.modules.user.entity.user import User
 from src.modules.movie.entity.movie import Movie
 from src.core.provider import Provider
+from src.core.log_config import logger
 
 
 
@@ -14,9 +15,13 @@ class GetMovieById:
         self.movie_repo:MovieRepository=provider.movie_repository
 
     def execute(self,movie_id):
-        raw_movie=self.movie_repo.get_by_id(movie_id)
-        if not raw_movie:
-            raise InvalidInputEnteredException(f"No Such movie with id {movie_id} ")
-        movie=self.movie_repo.to_dataclass(raw_movie,Movie)
-        return movie
+        try:
+            raw_movie=self.movie_repo.get_by_id(movie_id)
+            if not raw_movie:
+                raise InvalidInputEnteredException(f"No Such movie with id {movie_id} ")
+            movie=self.movie_repo.to_dataclass(raw_movie,Movie)
+            return movie
+        except Exception as e:
+            logger.error("An unexpected error occured during getting movie by id")
+            raise
     

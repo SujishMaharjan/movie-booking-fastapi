@@ -13,6 +13,7 @@ from src.entrypoints.api.movie.responses import MovieResponseAvailable, AllMovie
 from src.modules.movie.application.list_movies import GetMovies
 from src.modules.movie.application.get_movie_by_id import GetMovieById
 from src.core.security import is_admin,is_member
+from src.core.log_config import logger
 
 
 router = APIRouter(prefix="/movies", tags=["Movie"])
@@ -24,8 +25,10 @@ async def list_movies_resource(
     provider: AnnotatedRepositoryProvider,
     user: AnnotatedCurrentUser
 ):
+    logger.info("User %s trying to access movies list",user.username)
     is_admin(user)
     movies = GetMovies(provider).execute()
+    logger.debug("Retrieved %d movies", len(movies))
     return [AllMovieResponse(**vars(movie)) for movie in movies if movies]
 
 
@@ -38,6 +41,7 @@ async def add_movies_resource(
     user: AnnotatedCurrentUser,
     hall_settings: AnnotatedHallSettings
 ):
+    logger.info("Movie add request received for movie: %s", movie_model.movie_name)
     is_admin(user)
     new_movie = CreateMovie(provider).execute(movie_model,hall_settings)
     return responses.MovieAddResponse(**vars(new_movie))
@@ -48,7 +52,9 @@ async def show_available_movies(
     request: Request,
     provider:AnnotatedRepositoryProvider
 ):
+    logger.info("Request recieved for available movies")
     movies = GetAvailableMovies(provider).exeute()
+    logger.debug("Retrieved %d movies", len(movies))
     return [MovieResponseAvailable(**vars(movie)) for movie in movies]
 
 @router.get("/{movie_id}")
@@ -58,8 +64,10 @@ async def get_movie_resource(
     provider:AnnotatedRepositoryProvider,
     user:AnnotatedCurrentUser
 ):
+    logger.info("User %s requested info for movie details %s", user.id, movie_id)
     is_admin(user)
     movie = GetMovieById(provider).execute(movie_id)
+    logger.debug("Retrieved data for movie %s", movie_id)
     return MovieIdResponse(**vars(movie))
 
 
