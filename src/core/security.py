@@ -1,38 +1,32 @@
-import bcrypt,jwt
-from datetime import datetime, timezone, timedelta
-from src.modules.auth.exceptions import *
-from src.core.log_config import logger
-from src.config.settings import DefaultSettings
+from typing import Annotated
+from fastapi import Depends,Request
+from src.modules.user.exceptions import UserNotFoundException,InvalidMemberTypeException
+from src.modules.user.entity.user import User, UserRole
+from fastapi.security import OAuth2PasswordBearer
+from src.core.provider import Provider
 
 
-def hash_password(password):
-        bytes = password.encode("utf-8")
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(bytes,salt)
-        return hashed_password
-
-def verify_password(plain_password, password_from_db):
-    # breakpoint()
-    plain_password_bytes = plain_password.encode('utf-8')
-    result= bcrypt.checkpw(plain_password_bytes,eval(password_from_db))
-    if not result:
-        #  logger.debug()
-         raise InvalidPasswordException("Invalid Username Or Password")
-    return result
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/signin',scheme_name="JWT")
 
 
-def create_access_token(data: dict,default: DefaultSettings):
-    # breakpoint()
-    to_encode = data.copy()
-    try:
-        # expires_delta = timedelta(minutes = default.access_token_expire_minutes)
-        expires_delta = timedelta(minutes = default.access_token_expire_minutes)
-    finally:
-        if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
-        else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    # encoded_jwt = jwt.encode(to_encode, default.secret, algorithm=default.algorithm)
-    encoded_jwt = jwt.encode(to_encode, default.secret, algorithm=default.algorithm)
-    return encoded_jwt
+def get_current_user(request:Request,token:Annotated[str,Depends(oauth2_scheme)]):
+    provider = Provider(request)
+    token_repo=provider.token_repository
+    user_repo=provider.user_repository
+    username=token_repo.validate_and_decode_token(token)
+    raw_user = user_repo.get_by_username(username)
+    if not raw_user:
+        raise UserNotFoundException("User Not Found")
+    user = user_repo.to_dataclass(raw_user,User)
+    return user
+
+def is_admin(user:User):
+    if user.role!=UserRole.ADMIN:
+        raise InvalidMemberTypeException("Access denied. Admin only.")
+    return True
+
+def is_member(user:User):
+    if user.role!=UserRole.MEMBER:
+        raise InvalidMemberTypeException("Access denied. Member only.")
+    return True
+

@@ -1,5 +1,11 @@
 from src.core.exceptions import BaseHttPException
-from src.core.exceptions import DuplicateResourceException, FailedToSaveException, InvalidLoginException,InvalidInputEnteredException
+from src.core.exceptions import (
+    DuplicateResourceException,
+    FailedToSaveException,
+    InvalidLoginException,
+    InvalidInputEnteredException,
+    UnauthorizedException
+)
 from src.core.log_config import logger
 
 
@@ -12,4 +18,6 @@ class InvalidTokenException(InvalidInputEnteredException): ...
 class InvalidUserNameException(InvalidLoginException): ...
 
 class InvalidPasswordException(InvalidLoginException): ...
+
+class LoginException(UnauthorizedException): ...
 
