@@ -10,7 +10,7 @@ from src.core.provider import Provider
 
 class GetMovies:
     def __init__(self,provider:Provider):
-        self.movie_repo=provider.movie_respository
+        self.movie_repo:MovieRepository=provider.movie_repository
 
     def execute(self):
         

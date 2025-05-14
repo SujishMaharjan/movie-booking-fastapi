@@ -12,24 +12,14 @@ from src.entrypoints.api.reserve.models import UnReserveModel
 from src.modules.reserve.interfaces.reserve_repository import ReserveRepository
 from datetime import datetime
 from src.modules.reserve.exceptions import FailedToSaveException, MovieNotAvailableException,ReserveNotFoundException,FailedToDeleteReserveException
-
+from src.core.provider import Provider
 
 class MovieUnreserveService:
-    def __init__(self,token:str,user_repo:UserRepository,token_repo:TokenRepository,movie_repo:MovieRepository,reserve_repo:ReserveRepository):
-        self.token=token
-        self.user_repo=user_repo
-        self.token_repo=token_repo
-        self.movie_repo=movie_repo
-        self.reserve_repo=reserve_repo
+    def __init__(self,provider:Provider):
+        self.movie_repo:MovieRepository=provider.movie_repository
+        self.reserve_repo:ReserveRepository=provider.reserve_repository
 
-    def execute(self,unreserve_model:UnReserveModel):
-        username = self.token_repo.validate_and_decode_token(self.token)
-        user = self.user_repo.get_by_username(username)
-        if not user:
-            raise UserNotFoundException("User Not Found")
-        user:User = self.user_repo.to_dataclass(user,User)
-        self.is_member(user.role)
-
+    def execute(self,unreserve_model:UnReserveModel,user):
         reserve:Reserve= self.validate_seats_to_unreserve(unreserve_model.reserve_id,unreserve_model.no_of_seats)
         updated_reserve,before_reserve_seats=self.persist_unreserve(reserve,unreserve_model.no_of_seats)
         movie=self.update_movie_after_reserve(reserve.movie_id,unreserve_model.no_of_seats)

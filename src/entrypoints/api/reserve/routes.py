@@ -1,19 +1,13 @@
 from fastapi import APIRouter, Request,Depends
 from src.entrypoints.api.reserve import models
-from typing import Annotated
-from src.core.database import get_db_session
-from sqlalchemy.orm import Session
-from src.core.dependencies import oauth2_scheme,AnnotatedJwtSettings,AnnotatedHallSettings
-from src.modules.auth.infrastructure.Jwt_token_repository import JwtService
-from src.modules.user.infrastructure.user_postgres_repository import PostgresUserRepository
-from src.modules.movie.infrastructure.movie_postgres_repository import PostgresMovieRepository
-from src.modules.reserve.infrastructure.postgres_reserve_repository import PostgresReserveRepository
 from src.modules.reserve.application.reserve_movie import MovieReserveService
 from src.modules.reserve.application.get_self_reserve_details import GetUserReserveOwn
 from src.modules.reserve.application.unreserve_movies import MovieUnreserveService
 from src.modules.reserve.application.get_all_reserves import ListAllReservesService
 from src.entrypoints.api.reserve.responses import ReserveResponse, ReserveUserResponse,AllReserveResponse
-
+from src.core.dependencies import AnnotatedRepositoryProvider,AnnotatedCurrentUser
+from src.core.security import is_admin,is_member
+from src.core.exceptions import FailedToSaveException
 
 router = APIRouter(
     prefix="/reserves",
@@ -22,48 +16,38 @@ router = APIRouter(
 
 @router.get("/")
 async def get_reserve_resource(
-request: Request,
-    jwt_settings: AnnotatedJwtSettings,
-    token: Annotated[str,Depends(oauth2_scheme)],
-    db_session: Session = Depends(get_db_session),
+    request: Request,
+    provider: AnnotatedRepositoryProvider,
+    user: AnnotatedCurrentUser
 ):
-    user_repo = PostgresUserRepository(db_session)
-    token_repo = JwtService(jwt_settings)
-    reserve_repo = PostgresReserveRepository(db_session)
-    reserves = ListAllReservesService(token,user_repo,token_repo,reserve_repo).execute()
-    return [AllReserveResponse(**reserve.__dict__) for reserve in reserves]
+
+    is_admin(user)
+    reserves = ListAllReservesService(provider).execute()
+    return [AllReserveResponse(**vars(reserve)) for reserve in reserves]
 
 @router.get("/me")
 async def get_self_reserve_resource(
     request: Request,
-    jwt_settings: AnnotatedJwtSettings,
-    token: Annotated[str,Depends(oauth2_scheme)],
-    db_session: Session = Depends(get_db_session),
+    provider: AnnotatedRepositoryProvider,
+    user: AnnotatedCurrentUser
 ):
-    user_repo = PostgresUserRepository(db_session)
-    token_repo = JwtService(jwt_settings)
-    reserve_repo = PostgresReserveRepository(db_session)
-    reserve = GetUserReserveOwn(token,user_repo,token_repo,reserve_repo).execute()
-    return ReserveUserResponse(**reserve.__dict__)
+    reserve = GetUserReserveOwn(provider).execute(user)
+    return ReserveUserResponse(**vars(reserve))
 
 
 @router.post("/")
 async def create_reserve_resource(
     request: Request,
     model:models.AddReserveModel,
-    token: Annotated[str, Depends(oauth2_scheme)],
-    jwt_settings: AnnotatedJwtSettings,
-    db_session:Annotated[Session, Depends(get_db_session)]
+    provider: AnnotatedRepositoryProvider,
+    user: AnnotatedCurrentUser
 ):
-    token_repo=JwtService(jwt_settings)
-    user_repo=PostgresUserRepository(db_session)
-    movie_repo=PostgresMovieRepository(db_session)
-    reserve_repo=PostgresReserveRepository(db_session)
+    is_member(user)
     try:
-        reserve = MovieReserveService(token,user_repo,token_repo,movie_repo,reserve_repo).execute(model)
-        db_session.commit()
+        reserve = MovieReserveService(provider).execute(model,user)
+        provider.db_session.commit()
     except Exception as e:
-        db_session.rollback()
+        provider.db_session.rollback()
         #logger.debug("Failed to reserve movies")
         raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
 
@@ -75,19 +59,15 @@ async def create_reserve_resource(
 async def unreserve_reserve_resource(
     request: Request,
     model:models.UnReserveModel,
-    token: Annotated[str, Depends(oauth2_scheme)],
-    jwt_settings: AnnotatedJwtSettings,
-    db_session:Annotated[Session, Depends(get_db_session)]
+    provider: AnnotatedRepositoryProvider,
+    user: AnnotatedCurrentUser
 ):
-    token_repo=JwtService(jwt_settings)
-    user_repo=PostgresUserRepository(db_session)
-    movie_repo=PostgresMovieRepository(db_session)
-    reserve_repo=PostgresReserveRepository(db_session)
+    is_member(user)
     try:
-        unreserve = MovieUnreserveService(token,user_repo,token_repo,movie_repo,reserve_repo).execute(model)
-        db_session.commit()
+        unreserve = MovieUnreserveService(provider).execute(model,user)
+        provider.db_session.commit()
     except Exception as e:
-        db_session.rollback()
+        provider.db_session.rollback()
         #logger.debug("Failed to reserve movies")
         raise FailedToSaveException(f"Failed to UnReserve: {str(e)}") from e
 

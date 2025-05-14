@@ -11,8 +11,7 @@ class GetUser:
     def execute(self,user_id:int):
         user = self.user_repo.get_by_id(user_id)
         if not user:
-            raise UserNotFoundException(f"No user with such id{user_id}")
-        breakpoint()
+            raise UserNotFoundException(f"No user with such id {user_id}")
         user = self.user_repo.to_dataclass(user,User)
         return user
     

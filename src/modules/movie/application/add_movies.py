@@ -15,7 +15,7 @@ from src.core.provider import Provider
 
 class CreateMovie:
     def __init__(self,provider:Provider):
-        self.movie_repo:MovieRepository=provider.movie_respository
+        self.movie_repo:MovieRepository=provider.movie_repository
 
     def execute(self,movie_model:MovieAddModel,hall_settings:HallSettings):
         self.check_duplicate_movie(movie_model.movie_name)

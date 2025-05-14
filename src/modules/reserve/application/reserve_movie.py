@@ -12,23 +12,16 @@ from src.entrypoints.api.reserve.models import AddReserveModel
 from src.modules.reserve.interfaces.reserve_repository import ReserveRepository
 from datetime import datetime
 from src.modules.reserve.exceptions import FailedToSaveException, MovieNotAvailableException
+from src.core.provider import Provider
+
+
 
 class MovieReserveService:
-    def __init__(self,token:str,user_repo:UserRepository,token_repo:TokenRepository,movie_repo:MovieRepository,reserve_repo:ReserveRepository):
-        self.token=token
-        self.user_repo=user_repo
-        self.token_repo=token_repo
-        self.movie_repo=movie_repo
-        self.reserve_repo=reserve_repo
+    def __init__(self,provider:Provider):
+        self.movie_repo:MovieRepository=provider.movie_repository
+        self.reserve_repo:ReserveRepository=provider.reserve_repository
 
-    def execute(self,reserve_model:AddReserveModel):
-        username = self.token_repo.validate_and_decode_token(self.token)
-        user = self.user_repo.get_by_username(username)
-        if not user:
-            raise UserNotFoundException("User Not Found")
-        
-        user:User = self.user_repo.to_dataclass(user,User)
-        self.is_member(user.role)
+    def execute(self,reserve_model:AddReserveModel,user):
         movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
         self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
         updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
@@ -41,12 +34,6 @@ class MovieReserveService:
         
         
 
-
-    def is_member(self,role)->bool:
-        if role!=UserRole.MEMBER:
-            raise InvalidMemberTypeException("Access denied. Member only.")
-        return True
-    
 
     def validate_movie_and_seat_to_reserve(self,movie_id,no_of_seats) -> bool:
     

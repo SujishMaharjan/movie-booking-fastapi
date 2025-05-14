@@ -25,8 +25,8 @@ async def list_movies_resource(
     user: AnnotatedCurrentUser
 ):
     is_admin(user)
-    movies = GetMovies.execute(provider)
-    return [AllMovieResponse(**vars(movies)) for movie in movies]
+    movies = GetMovies(provider).execute()
+    return [AllMovieResponse(**vars(movie)) for movie in movies if movies]
 
 
 
@@ -38,7 +38,7 @@ async def add_movies_resource(
     user: AnnotatedCurrentUser,
     hall_settings: AnnotatedHallSettings
 ):
-    is_member(user)
+    is_admin(user)
     new_movie = CreateMovie(provider).execute(movie_model,hall_settings)
     return responses.MovieAddResponse(**vars(new_movie))
 
