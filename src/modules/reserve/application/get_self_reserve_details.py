@@ -11,13 +11,13 @@ from src.core.provider import Provider
 
 class GetUserReserveOwn:
     def __init__(self,provider:Provider):
-        self.user_repo:UserRepository = provider.reserve_repository
+        self.reserve_repo:ReserveRepository = provider.reserve_repository
     
     def execute(self,user:User):
-        raw_reserve= self.reserve_repo.get_by_user_id(user.id)
-        if not raw_reserve:
-            raise UserHasNoReservationException(f"{user.username} has not reserved any movie")
-
-        reserve = self.user_repo.to_dataclass(raw_reserve,Reserve)
-        return reserve
+        raw_reserves= self.reserve_repo.get_by_user_id(user.id)
+        
+        # if not raw_reserves:
+        #     raise UserHasNoReservationException(f"{user.username} has not reserved any movie")
+        reserves=[self.reserve_repo.to_dataclass(reserve,Reserve) for reserve in raw_reserves] if raw_reserves else []
+        return reserves
         

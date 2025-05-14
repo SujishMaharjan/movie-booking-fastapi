@@ -3,6 +3,7 @@ from src.modules.auth.interfaces.token_repository import TokenRepository
 from src.modules.user.exceptions import UserNotFoundException,InvalidMemberTypeException
 from src.modules.user.entity.user import User
 from src.core.provider import Provider
+from src.core.log_config import logger
 
 
 class ListUser:
@@ -10,10 +11,15 @@ class ListUser:
         self.user_repo:UserRepository = provider.user_repository
     
     def execute(self):
-        users = self.user_repo.get_all()
-        users = [self.user_repo.to_dataclass(user,User) for user in users] if users else []
-        return users
-        
+        logger.debug("List Attempt Started")
+        try:
+            users = self.user_repo.get_all()
+            users = [self.user_repo.to_dataclass(user,User) for user in users] if users else []
+            return users
+        except Exception as e:
+            logger.exception("An unexpected error occured while listing user")
+            raise
+    
  
 
     

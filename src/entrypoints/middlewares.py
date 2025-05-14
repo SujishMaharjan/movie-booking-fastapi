@@ -53,6 +53,11 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 status_code=401,
                 content={"detail": str(e)}
             )
+        except DatabaseException as e:
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(e)}
+            )
         except Exception as e:
             return JSONResponse(
                 status_code=500,

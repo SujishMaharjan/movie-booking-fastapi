@@ -32,12 +32,12 @@ class CustomLog:
 
         # Console Handler
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
+        console_handler.setLevel(logging.DEBUG)
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
 
         # File Handler
-        file_handler = RotatingFileHandler(log_file, maxBytes=1000, backupCount=5)
+        file_handler = RotatingFileHandler(log_file, maxBytes=500000, backupCount=5)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)

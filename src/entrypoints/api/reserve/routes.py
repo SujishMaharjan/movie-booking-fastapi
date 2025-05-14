@@ -8,6 +8,8 @@ from src.entrypoints.api.reserve.responses import ReserveResponse, ReserveUserRe
 from src.core.dependencies import AnnotatedRepositoryProvider,AnnotatedCurrentUser
 from src.core.security import is_admin,is_member
 from src.core.exceptions import FailedToSaveException
+from src.core.log_config import logger
+
 
 router = APIRouter(
     prefix="/reserves",
@@ -20,9 +22,10 @@ async def get_reserve_resource(
     provider: AnnotatedRepositoryProvider,
     user: AnnotatedCurrentUser
 ):
-
+    logger.info("User %s requested info for user %s", user.id)
     is_admin(user)
     reserves = ListAllReservesService(provider).execute()
+    logger.debug("Retrieved data %d reserves", len(reserves))
     return [AllReserveResponse(**vars(reserve)) for reserve in reserves]
 
 @router.get("/me")
@@ -31,8 +34,10 @@ async def get_self_reserve_resource(
     provider: AnnotatedRepositoryProvider,
     user: AnnotatedCurrentUser
 ):
-    reserve = GetUserReserveOwn(provider).execute(user)
-    return ReserveUserResponse(**vars(reserve))
+    logger.info("User %s requested reservation info",user.username)
+    reserves = GetUserReserveOwn(provider).execute(user)
+    logger.debug("Reserve data retrieved for user %s", user.id)
+    return [ReserveUserResponse(**vars(reserve)) for reserve in reserves]
 
 
 @router.post("/")
@@ -42,15 +47,10 @@ async def create_reserve_resource(
     provider: AnnotatedRepositoryProvider,
     user: AnnotatedCurrentUser
 ):
+    
     is_member(user)
-    try:
-        reserve = MovieReserveService(provider).execute(model,user)
-        provider.db_session.commit()
-    except Exception as e:
-        provider.db_session.rollback()
-        #logger.debug("Failed to reserve movies")
-        raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
-
+    logger.info("User %s requested reservation for movie %s", user.id,model.movie_id)
+    reserve = MovieReserveService(provider).execute(model,user)
     return ReserveResponse(**reserve)
 
 
@@ -63,14 +63,8 @@ async def unreserve_reserve_resource(
     user: AnnotatedCurrentUser
 ):
     is_member(user)
-    try:
-        unreserve = MovieUnreserveService(provider).execute(model,user)
-        provider.db_session.commit()
-    except Exception as e:
-        provider.db_session.rollback()
-        #logger.debug("Failed to reserve movies")
-        raise FailedToSaveException(f"Failed to UnReserve: {str(e)}") from e
-
+    logger.info("User: %s requested unreservation for reservation_id: %s", user.id,model.reserve_id)
+    unreserve = MovieUnreserveService(provider).execute(model,user)
     return ReserveResponse(**unreserve)
 
 

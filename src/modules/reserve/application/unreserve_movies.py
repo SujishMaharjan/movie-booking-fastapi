@@ -13,29 +13,35 @@ from src.modules.reserve.interfaces.reserve_repository import ReserveRepository
 from datetime import datetime
 from src.modules.reserve.exceptions import FailedToSaveException, MovieNotAvailableException,ReserveNotFoundException,FailedToDeleteReserveException
 from src.core.provider import Provider
+from src.core.log_config import logger
+
 
 class MovieUnreserveService:
     def __init__(self,provider:Provider):
+        self.db_session = provider.db_session
         self.movie_repo:MovieRepository=provider.movie_repository
         self.reserve_repo:ReserveRepository=provider.reserve_repository
 
-    def execute(self,unreserve_model:UnReserveModel,user):
-        reserve:Reserve= self.validate_seats_to_unreserve(unreserve_model.reserve_id,unreserve_model.no_of_seats)
-        updated_reserve,before_reserve_seats=self.persist_unreserve(reserve,unreserve_model.no_of_seats)
-        movie=self.update_movie_after_reserve(reserve.movie_id,unreserve_model.no_of_seats)
-        return {
-            "username":user.username,
-            "movie_name":self.movie_repo.get_by_id(movie.id).movie_name,
-            "before_reserve_seats":before_reserve_seats,
-            **updated_reserve.__dict__
-        }
+    def execute(self,unreserve_model:UnReserveModel,user:User):
+        logger.debug("Starting Unreservation")
+        try:
+            reserve:Reserve= self.validate_seats_to_unreserve(unreserve_model.reserve_id,unreserve_model.no_of_seats)
+            updated_reserve,before_reserve_seats=self.persist_unreserve(reserve,unreserve_model.no_of_seats)
+            movie=self.update_movie_after_reserve(reserve.movie_id,unreserve_model.no_of_seats)
+            logger.debug("Unreservation and update movie seats successful by user: %s", user.username)
+            self.db_session.commit()
+            return {
+                "username":user.username,
+                "movie_name":self.movie_repo.get_by_id(movie.id).movie_name,
+                "before_reserve_seats":before_reserve_seats,
+                **vars(updated_reserve)
+            }
+        except Exception as e:
+            self.db_session.rollback()
+            logger.error("An unexpected error occured while unreserving movie")
+            raise
+        
     
-    def is_member(self,role)->bool:
-        if role!=UserRole.MEMBER:
-            raise InvalidMemberTypeException("Access denied. Member only.")
-        return True
-    
-
     def validate_seats_to_unreserve(self,reserve_id:str,no_of_seats:int):
         raw_reserve = self.reserve_repo.get_by_id(reserve_id)
         if not raw_reserve:

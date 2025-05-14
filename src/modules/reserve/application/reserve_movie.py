@@ -13,25 +13,35 @@ from src.modules.reserve.interfaces.reserve_repository import ReserveRepository
 from datetime import datetime
 from src.modules.reserve.exceptions import FailedToSaveException, MovieNotAvailableException
 from src.core.provider import Provider
+from src.core.log_config import logger
 
 
 
 class MovieReserveService:
     def __init__(self,provider:Provider):
+        self.db_session= provider.db_session
         self.movie_repo:MovieRepository=provider.movie_repository
         self.reserve_repo:ReserveRepository=provider.reserve_repository
 
-    def execute(self,reserve_model:AddReserveModel,user):
-        movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
-        self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
-        updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
-        return {
-            "username":user.username,
-            "movie_name":movie.movie_name,
-            "before_reserve_seats":before_reserve_seats,
-            **updated_reserve.__dict__
-        }
-        
+    def execute(self,reserve_model:AddReserveModel,user:User):
+        logger.debug("Starting Reservation by user :%s", user.username)
+        try:
+            movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
+            self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
+            updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
+            self.db_session.commit()
+            logger.debug("Movies update and reservation creation Successful by user: %s",user.username)
+            return {
+                "username":user.username,
+                "movie_name":movie.movie_name,
+                "before_reserve_seats":before_reserve_seats,
+                **updated_reserve.__dict__
+            }
+        except Exception as e:
+            self.db_session.rollback()
+            logger.error("Failed to reserve movies")
+            raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
+                
         
 
 
