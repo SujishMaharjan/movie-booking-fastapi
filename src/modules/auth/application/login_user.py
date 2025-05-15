@@ -11,7 +11,7 @@ from src.core.log_config import logger
 class LoginUser:
     def __init__(self,provider:Provider):
         self.user_repository:UserRepository = provider.user_repository
-        self.hasher_repository:PasswordHasher = provider.hasher_repository
+        self.hasher_repository:PasswordHasher = provider.password_hasher_repository
         self.token_repository:TokenRepository = provider.token_repository
         
 
