@@ -16,7 +16,7 @@ class RegisterUser:
         self, provider: Provider
     ):
         self.user_repository:UserRepository = provider.user_repository
-        self.hasher_repository:PasswordHasher = provider.hasher_repository
+        self.hasher_repository:PasswordHasher = provider.password_hasher_repository
         
 
     def execute(self, name, username, password, phone, email):
