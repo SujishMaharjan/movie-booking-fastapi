@@ -40,7 +40,9 @@ class PostgresMovieRepository(MovieRepository):
 
     def get_all(self)-> Union[List[Movies],None]:
         try:
-            return self.session.query(Movies).all()
+            raw_movies= self.session.query(Movies).all()
+            movies = [self.from_persistence(movie,Movie) for movie in raw_movies] if raw_movies else []
+            return movies
         except SQLAlchemyError as e:
             logger.error("Database Error during getting all movies: %s",str(e))
             raise DatabaseException("Failed to fetch list of movie from database") from e
@@ -49,7 +51,9 @@ class PostgresMovieRepository(MovieRepository):
     
     def get_all_available(self)-> Union[List[Movies],None]:
         try:
-            return self.session.query(Movies).filter(Movies.movie_status == StatusType.AVAILABLE).all()
+            raw_movies= self.session.query(Movies).filter(Movies.movie_status == StatusType.AVAILABLE).all()
+            movies = [self.from_persistence(movie,Movie) for movie in raw_movies] if raw_movies else []
+            return movies
         except SQLAlchemyError as e:
             logger.error("Database error during getting all available movies: %s", str(e))
             raise DatabaseException("Failed to fetch available movies from database") from e
@@ -68,7 +72,7 @@ class PostgresMovieRepository(MovieRepository):
             logger.error("Database error while updating movie_seats and status in database:%s",str(e))
             raise DatabaseException("Failed to update movie_seats and status in database") from e
 
-    def to_dataclass(self,orm_obj, dataclass_type):
+    def from_persistence(self,orm_obj, dataclass_type):
         try:
             data = {
                 k: v for k, v in vars(orm_obj).items()
@@ -79,7 +83,7 @@ class PostgresMovieRepository(MovieRepository):
             logger.exception("Failed to convert database model to entity/domain model")
             raise 
 
-    def to_persistence_model(self,movie:Movie)->Movies:
+    def to_persistence(self,movie:Movie)->Movies:
         try:
             return Movies(**vars(movie))
         except Exception as e:

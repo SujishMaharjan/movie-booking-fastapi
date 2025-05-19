@@ -1,6 +1,6 @@
 import uuid
 from src.modules.user.interfaces.user_repository import UserRepository
-from src.modules.auth.interfaces.token_repository import TokenRepository
+from src.modules.auth.application.ports.token_repository import TokenRepository
 from src.modules.movie.interfaces.movie_repository import MovieRepository
 from src.modules.user.exceptions import UserNotFoundException,InvalidMemberTypeException
 from src.modules.user.entity.user import User,UserRole
@@ -17,100 +17,97 @@ from src.core.log_config import logger
 
 
 
-class MovieReserveService:
-    def __init__(self,provider:Provider):
-        self.db_session= provider.db_session
-        self.movie_repo:MovieRepository=provider.movie_repository
-        self.reserve_repo:ReserveRepository=provider.reserve_repository
 
-    def execute(self,reserve_model:AddReserveModel,user:User):
-        logger.debug("Starting Reservation by user :%s", user.username)
-        try:
-            movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
-            self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
-            updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
-            self.db_session.commit()
-            logger.debug("Movies update and reservation creation Successful by user: %s",user.username)
-            return {
-                "username":user.username,
-                "movie_name":movie.movie_name,
-                "before_reserve_seats":before_reserve_seats,
-                **updated_reserve.__dict__
-            }
-        except Exception as e:
-            self.db_session.rollback()
-            logger.error("Failed to reserve movies")
-            raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
-                
-        
-
-
-    def validate_movie_and_seat_to_reserve(self,movie_id,no_of_seats) -> bool:
-    
-        movie = self.movie_repo.get_by_id(movie_id)
-        if not movie:
-            raise MovieNotFoundException("No Such Movie Available")
-        if movie.movie_status!=StatusType.AVAILABLE:
-            raise MovieNotAvailableException("Movie Not available")
-        
-        movie = self.movie_repo.to_dataclass(movie,Movie)
-        if no_of_seats > movie.available_seats or no_of_seats == 0 :
-            raise InvalidSeatsEnteredException("Please Enter Valid Seats")
-        return movie
+def reserve_movie_service(self,reserve_model:AddReserveModel,user:User,provider:Provider):
+    db_session= provider.db_session
+    movie_repo:MovieRepository=provider.movie_repository
+    reserve_repo:ReserveRepository=provider.reserve_repository
+    logger.debug("Starting Reservation by user :%s", user.username)
+    try:
+        movie:Movie = self.validate_movie_and_seat_to_reserve(reserve_model.movie_id,reserve_model.no_of_seats)
+        self.update_movie_before_reserve(movie,reserve_model.no_of_seats)
+        updated_reserve,before_reserve_seats=self.create_or_update_reserve(user.id,movie.id,reserve_model.no_of_seats)
+        self.db_session.commit()
+        logger.debug("Movies update and reservation creation Successful by user: %s",user.username)
+        return {
+            "username":user.username,
+            "movie_name":movie.movie_name,
+            "before_reserve_seats":before_reserve_seats,
+            **updated_reserve.__dict__
+        }
+    except Exception as e:
+        self.db_session.rollback()
+        logger.error("Failed to reserve movies")
+        raise FailedToSaveException(f"Failed to Reserve: {str(e)}") from e
+            
     
 
-    def get_user_existing_reservation(self,user_id,movie_id):
-        raw_reserve = self.reserve_repo.get_by_user_id_and_movie_id(user_id,movie_id)
-        if not raw_reserve:
-            return None
-        return self.reserve_repo.to_dataclass(raw_reserve,Reserve)
+
+def validate_movie_and_seat_to_reserve(movie_id,no_of_seats,movie_repo:MovieRepository) -> bool:
+    movie = movie_repo.get_by_id(movie_id)
+    if not movie:
+        raise MovieNotFoundException("No Such Movie Available")
+    if movie.movie_status!=StatusType.AVAILABLE:
+        raise MovieNotAvailableException("Movie Not available")
     
+    movie = movie_repo.from_persistence(movie,Movie)
+    if no_of_seats > movie.available_seats or no_of_seats == 0 :
+        raise InvalidSeatsEnteredException("Please Enter Valid Seats")
+    return movie
 
-    def update_movie_before_reserve(self,movie:Movie,no_of_seats:int):
-        update_reserve_seats = movie.reserve_seats +no_of_seats
-        update_available_seats =movie.available_seats -no_of_seats
-        movie_status = "Fully Reserved" if update_available_seats==0 else movie.movie_status
-        try:
-            self.movie_repo.update_movie_seats_and_status(
-                movie_id=movie.id,
-                reserve_seats=update_reserve_seats,
-                available_seats=update_available_seats,
-                movie_status=movie_status
-                )
-        except Exception:
-            raise FailedToSaveException("Failed to update movie seats and status")
-        
-        return True
+
+def get_user_existing_reservation(user_id,movie_id,reserve_repo:ReserveRepository):
+    raw_reserve = reserve_repo.get_by_user_id_and_movie_id(user_id,movie_id)
+    if not raw_reserve:
+        return None
+    return reserve_repo.to_dataclass(raw_reserve,Reserve)
+
+
+def update_movie_before_reserve(movie:Movie,no_of_seats:int,movie_repo:MovieRepository):
+    update_reserve_seats = movie.reserve_seats +no_of_seats
+    update_available_seats =movie.available_seats -no_of_seats
+    movie_status = "Fully Reserved" if update_available_seats==0 else movie.movie_status
+    try:
+        movie_repo.update_movie_seats_and_status(
+            movie_id=movie.id,
+            reserve_seats=update_reserve_seats,
+            available_seats=update_available_seats,
+            movie_status=movie_status
+            )
+    except Exception:
+        raise FailedToSaveException("Failed to update movie seats and status")
     
-
-    def create_or_update_reserve(self,user_id:str,movie_id:str,no_of_seats:int):
-        try:
-            reserve:Reserve = self.reserve_repo.get_by_user_id_and_movie_id(user_id,movie_id)
-            before_reserve_seats = 0
-            if not reserve:
-                reserve = Reserve(
-                    id = str(uuid.uuid4()),
-                    user_id = user_id,
-                    movie_id = movie_id,
-                    user_reserve_seats=no_of_seats,
-                    created_at = datetime.now()
-                )
-                reserve_data = self.reserve_repo.to_persistence_model(reserve)
-                self.reserve_repo.save(reserve_data)
-                # raise FailedToSaveException("Testing whether movie will save in database if error is raised")
-            else:
-                before_reserve_seats=reserve.user_reserve_seats
-                reserve.user_reserve_seats+=no_of_seats
-                reserve.updated_at=datetime.now()
-                self.reserve_repo.update_reserve_seats(reserve.id,reserve.user_reserve_seats,reserve.updated_at)
-        except Exception as e:
-            raise FailedToSaveException("Failed to reserve or update seats", str(e))
-        return reserve,before_reserve_seats
+    return True
 
 
-    
-        
+def create_or_update_reserve(user_id:str,movie_id:str,no_of_seats:int,reserve_repo:ReserveRepository):
+    try:
+        reserve:Reserve = reserve_repo.get_by_user_id_and_movie_id(user_id,movie_id)
+        before_reserve_seats = 0
+        if not reserve:
+            reserve = Reserve(
+                id = str(uuid.uuid4()),
+                user_id = user_id,
+                movie_id = movie_id,
+                user_reserve_seats=no_of_seats,
+                created_at = datetime.now()
+            )
+            reserve_data = reserve_repo.to_persistence_model(reserve)
+            reserve_repo.save(reserve_data)
+            # raise FailedToSaveException("Testing whether movie will save in database if error is raised")
+        else:
+            before_reserve_seats=reserve.user_reserve_seats
+            reserve.user_reserve_seats+=no_of_seats
+            reserve.updated_at=datetime.now()
+            reserve_repo.update_reserve_seats(reserve.id,reserve.user_reserve_seats,reserve.updated_at)
+    except Exception as e:
+        raise FailedToSaveException("Failed to reserve or update seats", str(e))
+    return reserve,before_reserve_seats
 
 
 
     
+
+
+
+

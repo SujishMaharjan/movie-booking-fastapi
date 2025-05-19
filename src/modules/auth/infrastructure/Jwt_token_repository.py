@@ -1,5 +1,5 @@
 import jwt
-from src.modules.auth.interfaces.token_repository import TokenRepository
+from src.modules.auth.application.ports.token_repository import TokenRepository
 from datetime import datetime,timedelta,timezone
 from src.config.settings import JwtSettings
 from src.modules.auth.exceptions import InvalidTokenException

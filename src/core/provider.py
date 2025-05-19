@@ -15,4 +15,6 @@ class Provider:
         self.password_hasher_repository= password_hasher_repository
         self.movie_repository= movie_repository
         self.reserve_repository= reserve_repository
+
+   
         

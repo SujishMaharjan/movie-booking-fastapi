@@ -2,7 +2,7 @@ import click,uuid
 from src.modules.user.infrastructure.user_postgres_repository import PostgresUserRepository
 from src.modules.auth.infrastructure.bycrypt_password_hasher import BcryptPasswordHasher
 from src.modules.user.interfaces.user_repository import UserRepository
-from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
+from src.modules.auth.application.ports.password_hasher_repository import PasswordHasher
 from src.core.database import create_db_engine,Base
 from src.modules.user.infrastructure.persistence.models import Users
 from src.modules.movie.infrastructure.persistence.models import Movies
@@ -65,7 +65,6 @@ def create_super_user():
 @click.command
 def init_database_tables():
     engine= create_db_engine(AppSettings().database)
-    breakpoint()
     Base.metadata.create_all(bind=engine)
     click.echo("Database created")
 

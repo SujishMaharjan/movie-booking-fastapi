@@ -1,13 +1,9 @@
 from fastapi import APIRouter, Request,Depends
 from src.entrypoints.api.reserve import models
-from src.modules.reserve.application.reserve_movie import MovieReserveService
-from src.modules.reserve.application.get_self_reserve_details import GetUserReserveOwn
-from src.modules.reserve.application.unreserve_movies import MovieUnreserveService
-from src.modules.reserve.application.get_all_reserves import ListAllReservesService
+from src.modules.reserve.application.reserve_movie import reserve_movie_service
 from src.entrypoints.api.reserve.responses import ReserveResponse, ReserveUserResponse,AllReserveResponse
 from src.core.dependencies import AnnotatedRepositoryProvider,AnnotatedCurrentUser
 from src.core.security import is_admin,is_member
-from src.core.exceptions import FailedToSaveException
 from src.core.log_config import logger
 
 
@@ -35,7 +31,7 @@ async def get_self_reserve_resource(
     user: AnnotatedCurrentUser
 ):
     logger.info("User %s requested reservation info",user.username)
-    reserves = GetUserReserveOwn(provider).execute(user)
+    reserves = application(provider).execute(user)
     logger.debug("Reserve data retrieved for user %s", user.id)
     return [ReserveUserResponse(**vars(reserve)) for reserve in reserves]
 
@@ -50,7 +46,7 @@ async def create_reserve_resource(
     
     is_member(user)
     logger.info("User %s requested reservation for movie %s", user.id,model.movie_id)
-    reserve = MovieReserveService(provider).execute(model,user)
+    reserve = reserve_movie_service(model,user,provider)
     return ReserveResponse(**reserve)
 
 

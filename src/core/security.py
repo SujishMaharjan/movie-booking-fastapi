@@ -1,11 +1,9 @@
 from src.modules.user.exceptions import InvalidMemberTypeException
 from src.modules.user.entity.user import User, UserRole
-from fastapi.security import OAuth2PasswordBearer
 from src.core.log_config import logger
 
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/signin',scheme_name="JWT")
 
 
 def is_admin(user:User):

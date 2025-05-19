@@ -28,7 +28,7 @@ class CustomExceptionMiddleware(BaseHTTPMiddleware):
                 status_code=404,
                 content={"detail": str(e)}
             )
-        except InvalidInputEnteredException as e:
+        except InvalidInputException as e:
             return JSONResponse(
                 status_code=422,
                 content={"detail": str(e)}

@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-class CustomLog:
+class MovieLog:
     """
     CustomLog class for setting up logging with both console and file handlers.
 
@@ -50,4 +50,4 @@ class CustomLog:
         return self.logger
 
 
-logger = CustomLog().get_logger()
+logger = MovieLog().get_logger()

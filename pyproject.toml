@@ -36,6 +36,6 @@ allow-direct-references = true
 packages = ["src/movie_booking_fastapi"]
 
 [tool.rye.scripts]
-main = "fastapi dev src/main.py"
+main = "fastapi dev src/cmd/api/main.py"
 cli="python -m src.cmd.cli.main"
 psql ="docker exec -it -u postgres postgres_c psql"

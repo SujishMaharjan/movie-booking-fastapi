@@ -1,5 +1,5 @@
 import bcrypt
-from src.modules.auth.interfaces.password_hasher_repository import PasswordHasher
+from src.modules.auth.application.ports.password_hasher_repository import PasswordHasher
 from src.modules.auth.exceptions import LoginException
 from src.core.log_config import logger
 

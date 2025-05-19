@@ -1,4 +1,4 @@
-from src.modules.auth.interfaces.token_repository import TokenRepository
+from src.modules.auth.application.ports.token_repository import TokenRepository
 from src.modules.user.interfaces.user_repository import UserRepository
 from src.modules.reserve.interfaces.reserve_repository import ReserveRepository
 from src.modules.user.exceptions import UserNotFoundException,InvalidMemberTypeException

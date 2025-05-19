@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from src.modules.user.application import  list_users,get_user
+from src.modules.user.application import  user_service
 from src.entrypoints.api.user.responses import AllUserResponse,UserIdResponse
 from src.core.dependencies import AnnotatedRepositoryProvider,AnnotatedCurrentUser
 from src.core.security import is_admin
@@ -19,7 +19,7 @@ async def list_user_resource(
 ):
     logger.info("User %s trying to access user list",user.username)
     is_admin(user)
-    users = list_users.ListUser(provider).execute()
+    users = user_service.list_users(provider)
     logger.debug("Retrieved %d users", len(users))
     return [AllUserResponse(**vars(user)) for user in users]
 
@@ -32,7 +32,7 @@ async def get_self_user_resource(
     provider:AnnotatedRepositoryProvider
 ):
     logger.info("User %s requested their profile",user.username)
-    user = get_user.GetUser(provider).execute(user.id)
+    user = user_service.get_user_by_id(user.id,provider)
     logger.debug("User data retrieved for self user %s", user.id)
     return UserIdResponse(**vars(user))
     
@@ -48,7 +48,7 @@ async def get_user_resource(
 ):
     logger.info("User %s requested info for user %s", user.id,user_id)
     is_admin(user)
-    user = get_user.GetUser(provider).execute(user_id)
+    user = user_service.get_user_by_id(user.id,provider)
     logger.debug("Retrieved data for user %s", user_id)
     return UserIdResponse(**vars(user))
     
