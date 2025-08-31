@@ -1,0 +1,41 @@
+[project]
+name = "movie-booking-fastapi"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "SujishMaharjan", email = "sujishmaharjan@gmail.com" }
+]
+dependencies = [
+    "fastapi[standard]>=0.115.12",
+    "bcrypt>=4.3.0",
+    "sqlalchemy>=2.0.40",
+    "psycopg2>=2.9.10",
+    "python-decouple>=3.8",
+    "pyjwt>=2.10.1",
+    "pylint>=3.3.6",
+    "black>=25.1.0",
+    "pydantic-settings>=2.8.1",
+    "click>=8.2.0",
+    "alembic>=1.15.2",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = []
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/movie_booking_fastapi"]
+
+[tool.rye.scripts]
+main = "fastapi dev src/main.py"
+cli="python -m src.cmd.cli.main"
+psql ="docker exec -it -u postgres postgres_c psql"
