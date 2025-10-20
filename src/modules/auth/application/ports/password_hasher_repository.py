@@ -1,0 +1,6 @@
+from abc import ABC
+
+class PasswordHasher(ABC):
+    def hash_password(self, password:str)-> str: ...
+
+    def verify_password(self, password:str, hashed:str)-> bool: ...
